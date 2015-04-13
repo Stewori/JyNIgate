@@ -2,7 +2,7 @@
 /* Check for interrupts */
 
 #include "Python.h"
-#include "pythread.h"
+#include "pythread_JyNI.h"
 
 #ifdef QUICKWIN
 
