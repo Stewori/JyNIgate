@@ -1,5 +1,5 @@
 // Python/_warnings.c
-// Objects/abstract.c
+// Objects/abstract.c            (won't support soon)
 // Objects/boolobject.c
 // Objects/bufferobject.c
 // Objects/bytes_methods.c
@@ -12,7 +12,7 @@
 // Objects/codeobject.c
 // Objects/complexobject.c
 // Objects/descrobject.c
-// Objects/dictobject.c
+// Objects/dictobject.c          (won't support soon)
 // Python/dtoa.c
 // Python/dynload_shlib.c
 // Python/errors.c
