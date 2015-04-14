@@ -25,7 +25,7 @@
 // Python/getargs.c
 // Python/import.c
 // Python/importdl.c
-// Objects/intobject.c
+Objects/intobject.c
 // Objects/listobject.c
 // Objects/longobject.c
 // Objects/methodobject.c

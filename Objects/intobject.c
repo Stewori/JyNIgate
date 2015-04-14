@@ -4,6 +4,7 @@
 #include "Python.h"
 #include <ctype.h>
 #include <float.h>
+#include <errno.h> //temporary fix for JyNI - configure should solve this in Python.h
 
 static PyObject *int_int(PyIntObject *v);
 
@@ -36,7 +37,7 @@ PyInt_GetMax(void)
 
 struct _intblock {
     struct _intblock *next;
-    PyIntObject objects[N_INTOBJECTS];
+    JyIntObject objects[N_INTOBJECTS];
 };
 
 typedef struct _intblock PyIntBlock;
@@ -47,9 +48,9 @@ static PyIntObject *free_list = NULL;
 static PyIntObject *
 fill_free_list(void)
 {
-    PyIntObject *p, *q;
+    JyIntObject *p, *q;
     /* Python's object allocator isn't appropriate for large blocks. */
-    p = (PyIntObject *) PyMem_MALLOC(sizeof(PyIntBlock));
+    p = (JyIntObject *) PyMem_MALLOC(sizeof(PyIntBlock));
     if (p == NULL)
         return (PyIntObject *) PyErr_NoMemory();
     ((PyIntBlock *)p)->next = block_list;
@@ -59,9 +60,14 @@ fill_free_list(void)
     p = &((PyIntBlock *)p)->objects[0];
     q = p + N_INTOBJECTS;
     while (--q > p)
-        Py_TYPE(q) = (struct _typeobject *)(q-1);
-    Py_TYPE(q) = NULL;
-    return p + N_INTOBJECTS - 1;
+//Modified for JyNI:
+    {
+        Py_TYPE(FROM_JY_NO_GC(q)) = (struct _typeobject *)(FROM_JY_NO_GC(q-1));
+        Jy_InitImmutable((JyObject*) q);
+    }
+    Py_TYPE(FROM_JY_NO_GC(q)) = NULL;
+    Jy_InitImmutable((JyObject*) q);
+    return (PyIntObject*) FROM_JY_NO_GC(p + N_INTOBJECTS - 1);
 }
 
 #ifndef NSMALLPOSINTS
@@ -76,7 +82,7 @@ fill_free_list(void)
    The integers that are saved are those in the range
    -NSMALLNEGINTS (inclusive) to NSMALLPOSINTS (not inclusive).
 */
-static PyIntObject *small_ints[NSMALLNEGINTS + NSMALLPOSINTS];
+static JyIntObject *small_ints[NSMALLNEGINTS + NSMALLPOSINTS];
 #endif
 #ifdef COUNT_ALLOCS
 Py_ssize_t quick_int_allocs;
@@ -132,6 +138,8 @@ static void
 int_dealloc(PyIntObject *v)
 {
     if (PyInt_CheckExact(v)) {
+        JyObject* jy = AS_JY_NO_GC(v);
+        JyNI_CleanUp_JyObject(jy);
         Py_TYPE(v) = (struct _typeobject *)free_list;
         free_list = v;
     }
@@ -142,6 +150,8 @@ int_dealloc(PyIntObject *v)
 static void
 int_free(PyIntObject *v)
 {
+    JyObject* jy = AS_JY_NO_GC(v);
+    JyNI_CleanUp_JyObject(jy);
     Py_TYPE(v) = (struct _typeobject *)free_list;
     free_list = v;
 }
@@ -1460,6 +1470,7 @@ _PyInt_Init(void)
     PyIntObject *v;
     int ival;
 #if NSMALLNEGINTS + NSMALLPOSINTS > 0
+    JyObject* jy;
     for (ival = -NSMALLNEGINTS; ival < NSMALLPOSINTS; ival++) {
           if (!free_list && (free_list = fill_free_list()) == NULL)
                     return 0;
@@ -1469,6 +1480,8 @@ _PyInt_Init(void)
         PyObject_INIT(v, &PyInt_Type);
         v->ob_ival = ival;
         small_ints[ival + NSMALLNEGINTS] = v;
+        jy = AS_JY_NO_GC(v);
+        Jy_InitImmutable(jy);
     }
 #endif
     return 1;
@@ -1477,7 +1490,7 @@ _PyInt_Init(void)
 int
 PyInt_ClearFreeList(void)
 {
-    PyIntObject *p;
+    JyIntObject *p;
     PyIntBlock *list, *next;
     int i;
     int u;                      /* remaining unfreed ints per block */
@@ -1491,7 +1504,7 @@ PyInt_ClearFreeList(void)
         for (i = 0, p = &list->objects[0];
              i < N_INTOBJECTS;
              i++, p++) {
-            if (PyInt_CheckExact(p) && p->ob_refcnt != 0)
+            if (PyInt_CheckExact(FROM_JY_NO_GC(p)) && p->pyInt.ob_refcnt != 0)
                 u++;
         }
         next = list->next;
@@ -1501,21 +1514,22 @@ PyInt_ClearFreeList(void)
             for (i = 0, p = &list->objects[0];
                  i < N_INTOBJECTS;
                  i++, p++) {
-                if (!PyInt_CheckExact(p) ||
-                    p->ob_refcnt == 0) {
-                    Py_TYPE(p) = (struct _typeobject *)
+                if (!PyInt_CheckExact(FROM_JY_NO_GC(p)) ||
+                        p->pyInt.ob_refcnt == 0) {
+                    JyNI_CleanUp_JyObject((JyObject*) p);
+                    Py_TYPE(FROM_JY_NO_GC(p)) = (struct _typeobject *)
                         free_list;
-                    free_list = p;
+                    free_list = FROM_JY_NO_GC(p);
                 }
 #if NSMALLNEGINTS + NSMALLPOSINTS > 0
-                else if (-NSMALLNEGINTS <= p->ob_ival &&
-                         p->ob_ival < NSMALLPOSINTS &&
-                         small_ints[p->ob_ival +
+                else if (-NSMALLNEGINTS <= p->pyInt.ob_ival &&
+                        p->pyInt.ob_ival < NSMALLPOSINTS &&
+                        small_ints[p->pyInt.ob_ival +
                                     NSMALLNEGINTS] == NULL) {
-                    Py_INCREF(p);
-                    small_ints[p->ob_ival +
-                               NSMALLNEGINTS] = p;
-                }
+                    Py_INCREF(FROM_JY_NO_GC(p));
+                    small_ints[p->pyInt.ob_ival +
+                                NSMALLNEGINTS] = FROM_JY_NO_GC(p);
+				}
 #endif
             }
         }
@@ -1532,22 +1546,26 @@ PyInt_ClearFreeList(void)
 void
 PyInt_Fini(void)
 {
-    PyIntObject *p;
+    JyIntObject *p;
     PyIntBlock *list;
     int i;
     int u;                      /* total unfreed ints per block */
 
 #if NSMALLNEGINTS + NSMALLPOSINTS > 0
-    PyIntObject **q;
+    JyIntObject **q;
 
     i = NSMALLNEGINTS + NSMALLPOSINTS;
     q = small_ints;
     while (--i >= 0) {
-        Py_XDECREF(*q);
+        Py_XDECREF(FROM_JY_NO_GC(*q));
+        JyNI_CleanUp_JyObject((JyObject*) (*q));
         *q++ = NULL;
     }
 #endif
     u = PyInt_ClearFreeList();
+    env();
+    jint Py_VerboseFlag = (*env)->CallStaticIntMethod(env, JyNIClass,
+                JyNIGetDLVerbose);
     if (!Py_VerboseFlag)
         return;
     fprintf(stderr, "# cleanup ints");
@@ -1565,15 +1583,15 @@ PyInt_Fini(void)
             for (i = 0, p = &list->objects[0];
                  i < N_INTOBJECTS;
                  i++, p++) {
-                if (PyInt_CheckExact(p) && p->ob_refcnt != 0)
+                if (PyInt_CheckExact(FROM_JY_NO_GC(p)) && p->pyInt.ob_refcnt != 0)
                     /* XXX(twouters) cast refcount to
                        long until %zd is universally
                        available
                      */
                     fprintf(stderr,
                 "#   <int at %p, refcnt=%ld, val=%ld>\n",
-                                p, (long)p->ob_refcnt,
-                                p->ob_ival);
+                                FROM_JY_NO_GC(p), (long)p->pyInt.ob_refcnt,
+								p->pyInt.ob_ival);
             }
             list = list->next;
         }

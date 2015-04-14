@@ -67,8 +67,6 @@ def Cdest():
 if __name__ == '__main__':
 	initSrcList()
 	initIntro()
-	print "bla"
-	print introTxt
 	dest = "./test/"
 	dest = Cdest()
 	for line in srcList:
