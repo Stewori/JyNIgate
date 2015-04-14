@@ -1,48 +1,3 @@
-/* This File is based on codecs.c from CPython 2.7.4 release.
- * It has been modified to suit JyNI needs.
- *
- * Copyright of the original file:
- * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
- *
- * Copyright of JyNI:
- * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
- *
- *
- * This file is part of JyNI.
- *
- * JyNI is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * JyNI is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with JyNI.  If not, see <http://www.gnu.org/licenses/>.
- *
- *
- * Linking this library statically or dynamically with other modules is
- * making a combined work based on this library.  Thus, the terms and
- * conditions of the GNU General Public License cover the whole
- * combination.
- *
- * As a special exception, the copyright holders of this library give you
- * permission to link this library with independent modules to produce an
- * executable, regardless of the license terms of these independent
- * modules, and to copy and distribute the resulting executable under
- * terms of your choice, provided that you also meet, for each linked
- * independent module, the terms and conditions of the license of that
- * module.  An independent module is a module which is not derived from
- * or based on this library.  If you modify this library, you may extend
- * this exception to your version of the library, but you are not
- * obligated to do so.  If you do not wish to do so, delete this
- * exception statement from your version.
- */
-
 /* ------------------------------------------------------------------------
 
    Python Codec Registry and support functions
@@ -73,14 +28,14 @@ Copyright (c) Corporation for National Research Initiatives.
 
 int PyCodec_Register(PyObject *search_function)
 {
-	env(-1);
-	(*env)->CallStaticVoidMethod(env, pyCodecsClass, pyCodecsRegister, JyNI_JythonPyObject_FromPyObject(search_function));
-	if ((*env)->ExceptionCheck(env))
-	{
-		(*env)->ExceptionClear(env);
-		return -1;
-	}
-	return 0;
+    env(-1);
+    (*env)->CallStaticVoidMethod(env, pyCodecsClass, pyCodecsRegister, JyNI_JythonPyObject_FromPyObject(search_function));
+    if ((*env)->ExceptionCheck(env))
+    {
+        (*env)->ExceptionClear(env);
+        return -1;
+    }
+    return 0;
 //    PyInterpreterState *interp = PyThreadState_GET()->interp;
 //    if (interp->codec_search_path == NULL && _PyCodecRegistry_Init())
 //        goto onError;
@@ -146,10 +101,10 @@ int PyCodec_Register(PyObject *search_function)
 
 PyObject *_PyCodec_Lookup(const char *encoding)
 {
-	env(NULL);
-	jstring s = (*env)->NewStringUTF(env, encoding);
-	return JyNI_PyObject_FromJythonPyObject(
-			(*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecsLookup, s));
+    env(NULL);
+    jstring s = (*env)->NewStringUTF(env, encoding);
+    return JyNI_PyObject_FromJythonPyObject(
+            (*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecsLookup, s));
 //    PyInterpreterState *interp;
 //    PyObject *result, *args = NULL, *v;
 //    Py_ssize_t i, len;
@@ -372,12 +327,12 @@ PyObject *PyCodec_Encode(PyObject *object,
                          const char *encoding,
                          const char *errors)
 {
-	env(NULL);
-	jstring enc = (*env)->NewStringUTF(env, encoding);
-	jstring err = (*env)->NewStringUTF(env, errors);
-	return JyNI_PyObject_FromJythonPyObject( //todo: Type check of object - must be PyString or PyUnicode or a subtype of any of these
-			(*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecsEncode,
-					JyNI_JythonPyObject_FromPyObject(object), enc, err));
+    env(NULL);
+    jstring enc = (*env)->NewStringUTF(env, encoding);
+    jstring err = (*env)->NewStringUTF(env, errors);
+    return JyNI_PyObject_FromJythonPyObject( //todo: Type check of object - must be PyString or PyUnicode or a subtype of any of these
+            (*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecsEncode,
+                    JyNI_JythonPyObject_FromPyObject(object), enc, err));
 //    PyObject *encoder = NULL;
 //    PyObject *args = NULL, *result = NULL;
 //    PyObject *v;
@@ -425,12 +380,12 @@ PyObject *PyCodec_Decode(PyObject *object,
                          const char *encoding,
                          const char *errors)
 {
-	env(NULL);
-	jstring enc = (*env)->NewStringUTF(env, encoding);
-	jstring err = (*env)->NewStringUTF(env, errors);
-	return JyNI_PyObject_FromJythonPyObject( //todo: Type check of object - must be PyString or PyUnicode or a subtype of any of these
-			(*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecsDecode,
-					JyNI_JythonPyObject_FromPyObject(object), enc, err));
+    env(NULL);
+    jstring enc = (*env)->NewStringUTF(env, encoding);
+    jstring err = (*env)->NewStringUTF(env, errors);
+    return JyNI_PyObject_FromJythonPyObject( //todo: Type check of object - must be PyString or PyUnicode or a subtype of any of these
+            (*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecsDecode,
+                    JyNI_JythonPyObject_FromPyObject(object), enc, err));
 //    PyObject *decoder = NULL;
 //    PyObject *args = NULL, *result = NULL;
 //    PyObject *v;
@@ -476,15 +431,15 @@ PyObject *PyCodec_Decode(PyObject *object,
    Return 0 on success, -1 on error */
 int PyCodec_RegisterError(const char *name, PyObject *error)
 {
-	env(-1);
-	(*env)->CallStaticVoidMethod(env, pyCodecsClass, pyCodecsRegisterError,
-			(*env)->NewStringUTF(env, name), JyNI_JythonPyObject_FromPyObject(error));
-	if ((*env)->ExceptionCheck(env))
-	{
-		(*env)->ExceptionClear(env);
-		return -1;
-	}
-	return 0;
+    env(-1);
+    (*env)->CallStaticVoidMethod(env, pyCodecsClass, pyCodecsRegisterError,
+            (*env)->NewStringUTF(env, name), JyNI_JythonPyObject_FromPyObject(error));
+    if ((*env)->ExceptionCheck(env))
+    {
+        (*env)->ExceptionClear(env);
+        return -1;
+    }
+    return 0;
 //    PyInterpreterState *interp = PyThreadState_GET()->interp;
 //    if (interp->codec_search_path == NULL && _PyCodecRegistry_Init())
 //        return -1;
@@ -501,17 +456,17 @@ int PyCodec_RegisterError(const char *name, PyObject *error)
    the error handling callback for strict encoding will be returned. */
 PyObject *PyCodec_LookupError(const char *name)
 {
-	env(NULL);
-	jobject er = (*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecsLookupError,
-		(*env)->NewStringUTF(env, name));
-	jstring tpName = (*env)->CallObjectMethod(env,
-				(*env)->CallObjectMethod(env, er, pyObjectGetType),
-				pyTypeGetName);
-	//puts("tp name obtained:");
-	jputsLong(__LINE__);
-	cstr_from_jstring(cName, tpName);
-	jputs(cName);
-	return JyNI_PyObject_FromJythonPyObject(er);
+    env(NULL);
+    jobject er = (*env)->CallStaticObjectMethod(env, pyCodecsClass, pyCodecsLookupError,
+        (*env)->NewStringUTF(env, name));
+    jstring tpName = (*env)->CallObjectMethod(env,
+                (*env)->CallObjectMethod(env, er, pyObjectGetType),
+                pyTypeGetName);
+    //puts("tp name obtained:");
+    jputsLong(__LINE__);
+    cstr_from_jstring(cName, tpName);
+    jputs(cName);
+    return JyNI_PyObject_FromJythonPyObject(er);
 //    PyObject *handler = NULL;
 //
 //    PyInterpreterState *interp = PyThreadState_GET()->interp;

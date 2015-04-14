@@ -1886,20 +1886,20 @@ _Py_dg_strtod(const char *s00, char **se)
         bd2++;
 
         /* At this stage bd5 - bb5 == e == bd2 - bb2 + bbe, bb2 - bs2 == 1,
-	   and bs == 1, so:
+       and bs == 1, so:
 
               tdv == bd * 10**e = bd * 2**(bbe - bb2 + bd2) * 5**(bd5 - bb5)
               srv == bb * 2**bbe = bb * 2**(bbe - bb2 + bb2)
-	      0.5 ulp(srv) == 2**(bbe-1) = bs * 2**(bbe - bb2 + bs2)
+          0.5 ulp(srv) == 2**(bbe-1) = bs * 2**(bbe - bb2 + bs2)
 
-	   It follows that:
+       It follows that:
 
               M * tdv = bd * 2**bd2 * 5**bd5
               M * srv = bb * 2**bb2 * 5**bb5
               M * 0.5 ulp(srv) = bs * 2**bs2 * 5**bb5
 
-	   for some constant M.  (Actually, M == 2**(bb2 - bbe) * 5**bb5, but
-	   this fact is not needed below.)
+       for some constant M.  (Actually, M == 2**(bb2 - bbe) * 5**bb5, but
+       this fact is not needed below.)
         */
 
         /* Remove factor of 2**i, where i = min(bb2, bd2, bs2). */
