@@ -1,13 +1,14 @@
 This is JyNIgate
 ================
 
-It is, kind of a bridge between CPython and JyNI. JyNI contains lots of code
-that comes from CPython, but is too different from CPython to be maintained
+It is kind of a bridge between CPython and JyNI. JyNI contains lots of code
+that comes from CPython, but it is too different from CPython to be maintained
 as a fork. JyNIgate is a fork of CPython that contains some JyNI-specific
-changes. Those JyNI-parts that are mostly euivalent to CPython are maintained
-here within this fork, so that CPython-bugfixes can be merged easily into this
-code via git's/github's merging-system. A list of files is periodically copied
-over to JyNI from this repository. A detailed list of these files will follow.
+changes (note that it is not compilable). Those JyNI-parts that are mostly
+equivalent to CPython are maintained here within this fork, so that
+CPython-bugfixes can be merged easily into this code via git's merging-system.
+A list of files is periodically copied over to JyNI from this repository
+(available in JyNI-files.txt).
 
 We append the original CPython-README to this note:
 
