@@ -1,49 +1,3 @@
-/* This File is based on moduleobject.c from CPython 2.7.3 release.
- * It has been modified to suit JyNI needs.
- *
- * Copyright of the original file:
- * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
- *
- * Copyright of JyNI:
- * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
- *
- *
- * This file is part of JyNI.
- *
- * JyNI is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * JyNI is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with JyNI.  If not, see <http://www.gnu.org/licenses/>.
- *
- *
- * Linking this library statically or dynamically with other modules is
- * making a combined work based on this library.  Thus, the terms and
- * conditions of the GNU General Public License cover the whole
- * combination.
- *
- * As a special exception, the copyright holders of this library give you
- * permission to link this library with independent modules to produce an
- * executable, regardless of the license terms of these independent
- * modules, and to copy and distribute the resulting executable under
- * terms of your choice, provided that you also meet, for each linked
- * independent module, the terms and conditions of the license of that
- * module.  An independent module is a module which is not derived from
- * or based on this library.  If you modify this library, you may extend
- * this exception to your version of the library, but you are not
- * obligated to do so.  If you do not wish to do so, delete this
- * exception statement from your version.
- */
-
-
 /* Module object implementation */
 
 #include "JyNI.h"
@@ -59,17 +13,17 @@ typedef struct {
 //    {0}
 //};
 static PyGetSetDef module_getsets[] = {
-	{"__dict__", (getter)PyModule_GetDict},
-	{NULL},
+    {"__dict__", (getter)PyModule_GetDict},
+    {NULL},
 };
 
 PyObject *
 PyModule_New(const char *name)
 {
-	env(NULL);
-	return JyNI_PyObject_FromJythonPyObject(
-			(*env)->NewGlobalRef(env, (*env)->NewObject(env, pyModuleClass, pyModuleByStringConstructor,
-			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), stringIntern))));
+    env(NULL);
+    return JyNI_PyObject_FromJythonPyObject(
+            (*env)->NewGlobalRef(env, (*env)->NewObject(env, pyModuleClass, pyModuleByStringConstructor,
+            (*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, name), stringIntern))));
 
     /*PyModuleObject *m;
     PyObject *nameobj;
@@ -99,16 +53,16 @@ PyModule_New(const char *name)
 PyObject *
 PyModule_GetDict(PyObject *m)
 {
-	//puts("PyModule_GetDict");
-	if (!PyModule_Check(m)) {
-		PyErr_BadInternalCall();
-		return NULL;
-	}
-	env(NULL);
-	//jobject jm = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyModuleGetDict);
-	PyObject* er = JyNI_PyObject_FromJythonPyObject(
-			(*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyModuleGetDict));
-	return er;
+    //puts("PyModule_GetDict");
+    if (!PyModule_Check(m)) {
+        PyErr_BadInternalCall();
+        return NULL;
+    }
+    env(NULL);
+    //jobject jm = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyModuleGetDict);
+    PyObject* er = JyNI_PyObject_FromJythonPyObject(
+            (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyModuleGetDict));
+    return er;
     /*PyObject *d;
     if (!PyModule_Check(m)) {
         PyErr_BadInternalCall();
@@ -127,26 +81,26 @@ PyModule_GetDict(PyObject *m)
 char *
 PyModule_GetName(PyObject *m)
 {
-	if (!PyModule_Check(m)) {
-		PyErr_BadArgument();
-		return NULL;
-	}
-	//stringIntern
-	env(NULL);
-	jobject pyStr = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyObject__getattr__,
-			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__name__"), stringIntern));
-	if (pyStr == NULL)
-	{
-		PyErr_SetString(PyExc_SystemError, "nameless module");
-		return NULL;
-	}
-	jstring er = (*env)->CallObjectMethod(env, pyStr, pyStringAsString);
-	global_cstr_from_jstring(cstr, er);
-	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_WITH_GC(m), JyAttributeModuleName, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
+    if (!PyModule_Check(m)) {
+        PyErr_BadArgument();
+        return NULL;
+    }
+    //stringIntern
+    env(NULL);
+    jobject pyStr = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyObject__getattr__,
+            (*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__name__"), stringIntern));
+    if (pyStr == NULL)
+    {
+        PyErr_SetString(PyExc_SystemError, "nameless module");
+        return NULL;
+    }
+    jstring er = (*env)->CallObjectMethod(env, pyStr, pyStringAsString);
+    global_cstr_from_jstring(cstr, er);
+    JyNI_AddOrSetJyAttributeWithFlags(AS_JY_WITH_GC(m), JyAttributeModuleName, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
 
-	return cstr;
+    return cstr;
 
-	/*
+    /*
     PyObject *d;
     PyObject *nameobj;
     if (!PyModule_Check(m)) {
@@ -171,36 +125,36 @@ PyModule_GetName(PyObject *m)
 char *
 PyModule_GetFilename(PyObject *m)
 {
-	if (!PyModule_Check(m)) {
-		PyErr_BadArgument();
-		return NULL;
-	}
-	//stringIntern
-	env(NULL);
-	//puts("bis hier...");
-	jobject pyStr = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyObject__getattr__,
-			(*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__file__"), stringIntern));
-	//puts("und noch etwas weiter");
-	if (pyStr == NULL)
-	{
-		puts("module filename missing");
-		//printf("PyExc_SystemError isException? %i\n", PyExceptionClass_Check2(PyExc_SystemError));
-		//printf("PyExc_SystemError isType? %i\n", PyType_Check(PyExc_SystemError));
-		//puts("hier nicht");
-		//todo: fix this later
-		//PyErr_SetString(PyExc_SystemError, "module filename missing");
-		//puts("und hier0?");
-		return NULL;
-	}
-	//puts("und hier?");
-	jstring er = (*env)->CallObjectMethod(env, pyStr, pyStringAsString);
-	global_cstr_from_jstring(cstr, er);
-	//puts("fast fertig...");
-	JyNI_AddOrSetJyAttributeWithFlags(AS_JY_WITH_GC(m), JyAttributeModuleFile, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
+    if (!PyModule_Check(m)) {
+        PyErr_BadArgument();
+        return NULL;
+    }
+    //stringIntern
+    env(NULL);
+    //puts("bis hier...");
+    jobject pyStr = (*env)->CallObjectMethod(env, JyNI_JythonPyObject_FromPyObject(m), pyObject__getattr__,
+            (*env)->CallObjectMethod(env, (*env)->NewStringUTF(env, "__file__"), stringIntern));
+    //puts("und noch etwas weiter");
+    if (pyStr == NULL)
+    {
+        puts("module filename missing");
+        //printf("PyExc_SystemError isException? %i\n", PyExceptionClass_Check2(PyExc_SystemError));
+        //printf("PyExc_SystemError isType? %i\n", PyType_Check(PyExc_SystemError));
+        //puts("hier nicht");
+        //todo: fix this later
+        //PyErr_SetString(PyExc_SystemError, "module filename missing");
+        //puts("und hier0?");
+        return NULL;
+    }
+    //puts("und hier?");
+    jstring er = (*env)->CallObjectMethod(env, pyStr, pyStringAsString);
+    global_cstr_from_jstring(cstr, er);
+    //puts("fast fertig...");
+    JyNI_AddOrSetJyAttributeWithFlags(AS_JY_WITH_GC(m), JyAttributeModuleFile, cstr, JY_ATTR_OWNS_VALUE_FLAG_MASK);
 
-	return cstr;
+    return cstr;
 
-	/*
+    /*
     PyObject *d;
     PyObject *fileobj;
     if (!PyModule_Check(m)) {
@@ -307,9 +261,9 @@ module_dealloc(PyModuleObject *m)
 static PyObject *
 module_repr(PyModuleObject *m)
 {
-	env(NULL);
-	return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env,
-		JyNI_JythonPyObject_FromPyObject((PyObject*) m), pyObject__repr__));
+    env(NULL);
+    return JyNI_PyObject_FromJythonPyObject((*env)->CallObjectMethod(env,
+        JyNI_JythonPyObject_FromPyObject((PyObject*) m), pyObject__repr__));
 //    char *name;
 //    char *filename;
 //

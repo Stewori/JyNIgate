@@ -1,49 +1,3 @@
-/* This File is based on cobject.c from CPython 2.7.5 release.
- * It has been modified to suit JyNI needs.
- *
- * Copyright of the original file:
- * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
- * 2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
- *
- * Copyright of JyNI:
- * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
- *
- *
- * This file is part of JyNI.
- *
- * JyNI is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * JyNI is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with JyNI.  If not, see <http://www.gnu.org/licenses/>.
- *
- *
- * Linking this library statically or dynamically with other modules is
- * making a combined work based on this library.  Thus, the terms and
- * conditions of the GNU General Public License cover the whole
- * combination.
- *
- * As a special exception, the copyright holders of this library give you
- * permission to link this library with independent modules to produce an
- * executable, regardless of the license terms of these independent
- * modules, and to copy and distribute the resulting executable under
- * terms of your choice, provided that you also meet, for each linked
- * independent module, the terms and conditions of the license of that
- * module.  An independent module is a module which is not derived from
- * or based on this library.  If you modify this library, you may extend
- * this exception to your version of the library, but you are not
- * obligated to do so.  If you do not wish to do so, delete this
- * exception statement from your version.
- */
-
-
 /* Wrap void* pointers to be passed between C modules */
 
 #include "JyNI.h"
@@ -150,7 +104,7 @@ PyCObject_Import(char *module_name, char *name)
         if ((c = PyObject_GetAttrString(m,name))) {
             r = PyCObject_AsVoidPtr(c);
             Py_DECREF(c);
-	}
+    }
         Py_DECREF(m);
     }
     return r;
@@ -161,10 +115,10 @@ PyCObject_SetVoidPtr(PyObject *self, void *cobj)
 {
     PyCObject* cself = (PyCObject*)self;
     if (cself == NULL || !PyCObject_Check(cself) ||
-	cself->destructor != NULL) {
-	PyErr_SetString(PyExc_TypeError, 
-			"Invalid call to PyCObject_SetVoidPtr");
-	return 0;
+    cself->destructor != NULL) {
+    PyErr_SetString(PyExc_TypeError, 
+            "Invalid call to PyCObject_SetVoidPtr");
+    return 0;
     }
     cself->cobject = cobj;
     return 1;
@@ -193,25 +147,25 @@ mechanism to link to one another.");
 
 PyTypeObject PyCObject_Type = {
     PyVarObject_HEAD_INIT(&PyType_Type, 0)
-    "PyCObject",		/*tp_name*/
-    sizeof(PyCObject),		/*tp_basicsize*/
-    0,				/*tp_itemsize*/
+    "PyCObject",        /*tp_name*/
+    sizeof(PyCObject),        /*tp_basicsize*/
+    0,                /*tp_itemsize*/
     /* methods */
     (destructor)PyCObject_dealloc, /*tp_dealloc*/
-    0,				/*tp_print*/
-    0,				/*tp_getattr*/
-    0,				/*tp_setattr*/
-    0,				/*tp_compare*/
-    0,				/*tp_repr*/
-    0,				/*tp_as_number*/
-    0,				/*tp_as_sequence*/
-    0,				/*tp_as_mapping*/
-    0,				/*tp_hash*/
-    0,				/*tp_call*/
-    0,				/*tp_str*/
-    0,				/*tp_getattro*/
-    0,				/*tp_setattro*/
-    0,				/*tp_as_buffer*/
-    0,				/*tp_flags*/
-    PyCObject_Type__doc__	/*tp_doc*/
+    0,                /*tp_print*/
+    0,                /*tp_getattr*/
+    0,                /*tp_setattr*/
+    0,                /*tp_compare*/
+    0,                /*tp_repr*/
+    0,                /*tp_as_number*/
+    0,                /*tp_as_sequence*/
+    0,                /*tp_as_mapping*/
+    0,                /*tp_hash*/
+    0,                /*tp_call*/
+    0,                /*tp_str*/
+    0,                /*tp_getattro*/
+    0,                /*tp_setattro*/
+    0,                /*tp_as_buffer*/
+    0,                /*tp_flags*/
+    PyCObject_Type__doc__    /*tp_doc*/
 };
