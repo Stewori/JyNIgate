@@ -1,5 +1,5 @@
-#include "Python.h"
-#include "bytes_methods.h"
+#include "Python_JyNI.h"
+#include "bytes_methods_JyNI.h"
 
 PyDoc_STRVAR_shared(_Py_isspace__doc__,
 "B.isspace() -> bool\n\

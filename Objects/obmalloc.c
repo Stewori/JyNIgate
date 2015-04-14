@@ -1,13 +1,52 @@
-#include "Python.h"
+/* This File is based on obmalloc.c from CPython 2.7.3 release.
+ * It has been modified to suit JyNI needs.
+ *
+ * Copyright of the original file:
+ * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
+ * 2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
+ *
+ * Copyright of JyNI:
+ * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
+ *
+ *
+ * This file is part of JyNI.
+ *
+ * JyNI is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JyNI is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with JyNI.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ * Linking this library statically or dynamically with other modules is
+ * making a combined work based on this library.  Thus, the terms and
+ * conditions of the GNU General Public License cover the whole
+ * combination.
+ *
+ * As a special exception, the copyright holders of this library give you
+ * permission to link this library with independent modules to produce an
+ * executable, regardless of the license terms of these independent
+ * modules, and to copy and distribute the resulting executable under
+ * terms of your choice, provided that you also meet, for each linked
+ * independent module, the terms and conditions of the license of that
+ * module.  An independent module is a module which is not derived from
+ * or based on this library.  If you modify this library, you may extend
+ * this exception to your version of the library, but you are not
+ * obligated to do so.  If you do not wish to do so, delete this
+ * exception statement from your version.
+ */
+
+
+#include "JyNI.h"
 
 #ifdef WITH_PYMALLOC
-
-#ifdef HAVE_MMAP
- #include <sys/mman.h>
- #ifdef MAP_ANONYMOUS
-  #define ARENAS_USE_MMAP
- #endif
-#endif
 
 #ifdef WITH_VALGRIND
 #include <valgrind/valgrind.h>
@@ -82,8 +121,7 @@ static int running_on_valgrind = -1;
  * Allocation strategy abstract:
  *
  * For small requests, the allocator sub-allocates <Big> blocks of memory.
- * Requests greater than SMALL_REQUEST_THRESHOLD bytes are routed to the
- * system's allocator. 
+ * Requests greater than 256 bytes are routed to the system's allocator.
  *
  * Small requests are grouped in size classes spaced 8 bytes apart, due
  * to the required valid alignment of the returned address. Requests of
@@ -115,11 +153,10 @@ static int running_on_valgrind = -1;
  *       57-64                   64                       7
  *       65-72                   72                       8
  *        ...                   ...                     ...
- *      497-504                 504                      62
- *      505-512                 512                      63 
+ *      241-248                 248                      30
+ *      249-256                 256                      31
  *
- *      0, SMALL_REQUEST_THRESHOLD + 1 and up: routed to the underlying
- *      allocator.
+ *      0, 257 and up: routed to the underlying allocator.
  */
 
 /*==========================================================================*/
@@ -152,13 +189,10 @@ static int running_on_valgrind = -1;
  *      1) ALIGNMENT <= SMALL_REQUEST_THRESHOLD <= 256
  *      2) SMALL_REQUEST_THRESHOLD is evenly divisible by ALIGNMENT
  *
- * Note: a size threshold of 512 guarantees that newly created dictionaries
- * will be allocated from preallocated memory pools on 64-bit.
- *
  * Although not required, for better performance and space efficiency,
  * it is recommended that SMALL_REQUEST_THRESHOLD is set to a power of 2.
  */
-#define SMALL_REQUEST_THRESHOLD 512 
+#define SMALL_REQUEST_THRESHOLD 256
 #define NB_SMALL_SIZE_CLASSES   (SMALL_REQUEST_THRESHOLD / ALIGNMENT)
 
 /*
@@ -186,15 +220,15 @@ static int running_on_valgrind = -1;
 /*
  * The allocator sub-allocates <Big> blocks of memory (called arenas) aligned
  * on a page boundary. This is a reserved virtual address space for the
- * current process (obtained through a malloc()/mmap() call). In no way this
- * means that the memory arenas will be used entirely. A malloc(<Big>) is
- * usually an address range reservation for <Big> bytes, unless all pages within
- * this space are referenced subsequently. So malloc'ing big blocks and not
- * using them does not mean "wasting memory". It's an addressable range
- * wastage... 
+ * current process (obtained through a malloc call). In no way this means
+ * that the memory arenas will be used entirely. A malloc(<Big>) is usually
+ * an address range reservation for <Big> bytes, unless all pages within this
+ * space are referenced subsequently. So malloc'ing big blocks and not using
+ * them does not mean "wasting memory". It's an addressable range wastage...
  *
- * Arenas are allocated with mmap() on systems supporting anonymous memory
- * mappings to reduce heap fragmentation.
+ * Therefore, allocating arenas with malloc is not optimal, because there is
+ * some address space wastage, but this is the most portable way to request
+ * memory from the system across various platforms.
  */
 #define ARENA_SIZE              (256 << 10)     /* 256KB */
 
@@ -452,9 +486,6 @@ static poolp usedpools[2 * ((NB_SMALL_SIZE_CLASSES + 7) / 8) * 8] = {
     , PT(48), PT(49), PT(50), PT(51), PT(52), PT(53), PT(54), PT(55)
 #if NB_SMALL_SIZE_CLASSES > 56
     , PT(56), PT(57), PT(58), PT(59), PT(60), PT(61), PT(62), PT(63)
-#if NB_SMALL_SIZE_CLASSES > 64
-#error "NB_SMALL_SIZE_CLASSES should be less than 64"
-#endif /* NB_SMALL_SIZE_CLASSES > 64 */
 #endif /* NB_SMALL_SIZE_CLASSES > 56 */
 #endif /* NB_SMALL_SIZE_CLASSES > 48 */
 #endif /* NB_SMALL_SIZE_CLASSES > 40 */
@@ -540,8 +571,6 @@ new_arena(void)
 {
     struct arena_object* arenaobj;
     uint excess;        /* number of bytes above pool alignment */
-    void *address;
-    int err;
 
 #ifdef PYMALLOC_DEBUG
     if (Py_GETENV("PYTHONMALLOCSTATS"))
@@ -594,15 +623,8 @@ new_arena(void)
     arenaobj = unused_arena_objects;
     unused_arena_objects = arenaobj->nextarena;
     assert(arenaobj->address == 0);
-#ifdef ARENAS_USE_MMAP
-    address = mmap(NULL, ARENA_SIZE, PROT_READ|PROT_WRITE,
-                   MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-    err = (address == MAP_FAILED);
-#else
-    address = malloc(ARENA_SIZE);
-    err = (address == 0);
-#endif    
-    if (err) {
+    arenaobj->address = (uptr)malloc(ARENA_SIZE);
+    if (arenaobj->address == 0) {
         /* The allocation failed: return NULL after putting the
          * arenaobj back.
          */
@@ -610,7 +632,6 @@ new_arena(void)
         unused_arena_objects = arenaobj;
         return NULL;
     }
-    arenaobj->address = (uptr)address;
 
     ++narenas_currently_allocated;
 #ifdef PYMALLOC_DEBUG
@@ -768,8 +789,25 @@ int Py_ADDRESS_IN_RANGE(void *P, poolp pool) Py_NO_INLINE;
  */
 
 #undef PyObject_Malloc
+
+/* JyNI-note: Though this method might not only be used for PyObject-
+ * allocation, we always prepend a JyObject. We regard this slight
+ * overhead in non-PyObject cases as preferable over potential
+ * segmentation-fault if a PyObject is created via PyObject_NEW or
+ * PyObject_NEW_VAR.
+ */
 void *
 PyObject_Malloc(size_t nbytes)
+{
+	JyObject* er = PyObject_RawMalloc(sizeof(JyObject) + nbytes);
+	er->attr = NULL;
+	er->flags = 0;
+	er->jy = NULL;
+	return FROM_JY_NO_GC(er);
+}
+
+void *
+PyObject_RawMalloc(size_t nbytes)
 {
     block *bp;
     poolp pool;
@@ -971,8 +1009,18 @@ redirect:
 /* free */
 
 #undef PyObject_Free
+
 void
 PyObject_Free(void *p)
+{
+	//this is identical with former JyNI_Del.
+	JyObject* jy = AS_JY_NO_GC(p);
+	JyNI_CleanUp_JyObject(jy);
+	PyObject_RawFree(jy);
+}
+
+void
+PyObject_RawFree(void *p)
 {
     poolp pool;
     block *lastfree;
@@ -1079,11 +1127,7 @@ PyObject_Free(void *p)
                 unused_arena_objects = ao;
 
                 /* Free the entire arena. */
-#ifdef ARENAS_USE_MMAP
-                munmap((void *)ao->address, ARENA_SIZE);
-#else
                 free((void *)ao->address);
-#endif
                 ao->address = 0;                        /* mark unassociated */
                 --narenas_currently_allocated;
 
@@ -1204,6 +1248,13 @@ redirect:
 void *
 PyObject_Realloc(void *p, size_t nbytes)
 {
+	//header should be approprietly copied by underlying call to RawRealloc.
+	return FROM_JY_NO_GC(PyObject_RawRealloc(AS_JY_NO_GC(p), nbytes+sizeof(JyObject)));
+}
+
+void *
+PyObject_RawRealloc(void *p, size_t nbytes)
+{
     void *bp;
     poolp pool;
     size_t size;
@@ -1249,10 +1300,10 @@ PyObject_Realloc(void *p, size_t nbytes)
             }
             size = nbytes;
         }
-        bp = PyObject_Malloc(nbytes);
+        bp = PyObject_RawMalloc(nbytes);
         if (bp != NULL) {
             memcpy(bp, p, size);
-            PyObject_Free(p);
+            PyObject_RawFree(p);
         }
         return bp;
     }
@@ -1742,7 +1793,7 @@ printone(const char* msg, size_t value)
     k = 3;
     do {
         size_t nextvalue = value / 10;
-        unsigned int digit = (unsigned int)(value - nextvalue * 10);
+        uint digit = (uint)(value - nextvalue * 10);
         value = nextvalue;
         buf[i--] = (char)(digit + '0');
         --k;

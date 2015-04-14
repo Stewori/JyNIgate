@@ -1,13 +1,58 @@
+/* This File is based on traceback.c from CPython 2.7.3 release.
+ * It has been modified to suit JyNI needs.
+ *
+ * Copyright of the original file:
+ * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
+ * 2011, 2012, 2013, 2014, 2015 Python Software Foundation.  All rights reserved.
+ *
+ * Copyright of JyNI:
+ * Copyright (c) 2013, 2014, 2015 Stefan Richthofer.  All rights reserved.
+ *
+ *
+ * This file is part of JyNI.
+ *
+ * JyNI is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JyNI is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with JyNI.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ * Linking this library statically or dynamically with other modules is
+ * making a combined work based on this library.  Thus, the terms and
+ * conditions of the GNU General Public License cover the whole
+ * combination.
+ *
+ * As a special exception, the copyright holders of this library give you
+ * permission to link this library with independent modules to produce an
+ * executable, regardless of the license terms of these independent
+ * modules, and to copy and distribute the resulting executable under
+ * terms of your choice, provided that you also meet, for each linked
+ * independent module, the terms and conditions of the license of that
+ * module.  An independent module is a module which is not derived from
+ * or based on this library.  If you modify this library, you may extend
+ * this exception to your version of the library, but you are not
+ * obligated to do so.  If you do not wish to do so, delete this
+ * exception statement from your version.
+ */
+
 
 /* Traceback implementation */
 
-#include "Python.h"
+#include "JyNI.h"
 
-#include "code.h"
-#include "frameobject.h"
-#include "structmember.h"
-#include "osdefs.h"
-#include "traceback.h"
+//#include "code.h"
+//#include "frameobject.h"
+#include "structmember_JyNI.h"
+//#include "osdefs.h"
+//#include "traceback.h"
 
 #define OFF(x) offsetof(PyTracebackObject, x)
 
@@ -16,7 +61,7 @@ static PyMemberDef tb_memberlist[] = {
     {"tb_frame",        T_OBJECT,       OFF(tb_frame), READONLY},
     {"tb_lasti",        T_INT,          OFF(tb_lasti), READONLY},
     {"tb_lineno",       T_INT,          OFF(tb_lineno), READONLY},
-    {NULL}      /* Sentinel */
+    {NULL}      // Sentinel
 };
 
 static void
@@ -50,36 +95,36 @@ PyTypeObject PyTraceBack_Type = {
     "traceback",
     sizeof(PyTracebackObject),
     0,
-    (destructor)tb_dealloc, /*tp_dealloc*/
-    0,                  /*tp_print*/
-    0,              /*tp_getattr*/
-    0,                  /*tp_setattr*/
-    0,                  /*tp_compare*/
-    0,                  /*tp_repr*/
-    0,                  /*tp_as_number*/
-    0,                  /*tp_as_sequence*/
-    0,                  /*tp_as_mapping*/
-    0,                  /* tp_hash */
-    0,                  /* tp_call */
-    0,                  /* tp_str */
-    0,                  /* tp_getattro */
-    0,                  /* tp_setattro */
-    0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
-    0,                                          /* tp_doc */
-    (traverseproc)tb_traverse,                  /* tp_traverse */
-    (inquiry)tb_clear,                          /* tp_clear */
-    0,                                          /* tp_richcompare */
-    0,                                          /* tp_weaklistoffset */
-    0,                                          /* tp_iter */
-    0,                                          /* tp_iternext */
-    0,                                          /* tp_methods */
-    tb_memberlist,                              /* tp_members */
-    0,                                          /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
+    (destructor)tb_dealloc, //tp_dealloc
+    0,                  //tp_print
+    0,              //tp_getattr
+    0,                  //tp_setattr
+    0,                  //tp_compare
+    0,                  //tp_repr
+    0,                  //tp_as_number
+    0,                  //tp_as_sequence
+    0,                  //tp_as_mapping
+    0,                  // tp_hash
+    0,                  // tp_call
+    0,                  // tp_str
+    0,                  // tp_getattro
+    0,                  // tp_setattro
+    0,                                          // tp_as_buffer
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,// tp_flags
+    0,                                          // tp_doc
+    (traverseproc)tb_traverse,                  // tp_traverse
+    (inquiry)tb_clear,                          // tp_clear
+    0,                                          // tp_richcompare
+    0,                                          // tp_weaklistoffset
+    0,                                          // tp_iter
+    0,                                          // tp_iternext
+    0,                                          // tp_methods
+    tb_memberlist,                              // tp_members
+    0,                                          // tp_getset
+    0,                                          // tp_base
+    0,                                          // tp_dict
 };
-
+/*
 static PyTracebackObject *
 newtracebackobject(PyTracebackObject *next, PyFrameObject *frame)
 {
@@ -126,11 +171,11 @@ _Py_DisplaySourceLine(PyObject *f, const char *filename, int lineno, int indent)
 
     if (filename == NULL)
         return -1;
-    /* This is needed by Emacs' compile command */
+    // This is needed by Emacs' compile command
 #define FMT "  File \"%.500s\", line %d, in %.500s\n"
     xfp = fopen(filename, "r" PY_STDIOTEXTMODE);
     if (xfp == NULL) {
-        /* Search tail of filename in sys.path before giving up */
+        // Search tail of filename in sys.path before giving up
         PyObject *path;
         const char *tail = strrchr(filename, SEP);
         if (tail == NULL)
@@ -152,10 +197,10 @@ _Py_DisplaySourceLine(PyObject *f, const char *filename, int lineno, int indent)
                     size_t len;
                     len = PyString_GET_SIZE(v);
                     if (len + 1 + taillen >= MAXPATHLEN)
-                        continue; /* Too long */
+                        continue; // Too long
                     strcpy(namebuf, PyString_AsString(v));
                     if (strlen(namebuf) != len)
-                        continue; /* v contains '\0' */
+                        continue; // v contains '\0'
                     if (len > 0 && namebuf[len-1] != SEP)
                         namebuf[len++] = SEP;
                     strcpy(namebuf+len, tail);
@@ -181,11 +226,11 @@ _Py_DisplaySourceLine(PyObject *f, const char *filename, int lineno, int indent)
             *pLastChar = '\0';
             if (Py_UniversalNewlineFgets(linebuf, sizeof linebuf, xfp, NULL) == NULL)
                 break;
-            /* fgets read *something*; if it didn't get as
-               far as pLastChar, it must have found a newline
-               or hit the end of the file;              if pLastChar is \n,
-               it obviously found a newline; else we haven't
-               yet seen a newline, so must continue */
+            // fgets read *something*; if it didn't get as
+            // far as pLastChar, it must have found a newline
+            // or hit the end of the file;              if pLastChar is \n,
+            // it obviously found a newline; else we haven't
+            // yet seen a newline, so must continue
         } while (*pLastChar != '\0' && *pLastChar != '\n');
     }
     if (i == lineno) {
@@ -194,7 +239,7 @@ _Py_DisplaySourceLine(PyObject *f, const char *filename, int lineno, int indent)
         while (*p == ' ' || *p == '\t' || *p == '\014')
             p++;
 
-        /* Write some spaces before the line */
+        // Write some spaces before the line
         strcpy(buf, "          ");
         assert (strlen(buf) == 10);
         while (indent > 0) {
@@ -223,7 +268,7 @@ tb_displayline(PyObject *f, const char *filename, int lineno, const char *name)
 
     if (filename == NULL || name == NULL)
         return -1;
-    /* This is needed by Emacs' compile command */
+    // This is needed by Emacs' compile command
 #define FMT "  File \"%.500s\", line %d, in %.500s\n"
     PyOS_snprintf(linebuf, sizeof(linebuf), FMT, filename, lineno, name);
     err = PyFile_WriteString(linebuf, f);
@@ -281,3 +326,4 @@ PyTraceBack_Print(PyObject *v, PyObject *f)
         err = tb_printinternal((PyTracebackObject *)v, f, limit);
     return err;
 }
+*/
