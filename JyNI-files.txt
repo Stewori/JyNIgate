@@ -2,7 +2,7 @@
 // Objects/abstract.c            (won't support soon)
 // Objects/boolobject.c
 // Objects/bufferobject.c
-// Objects/bytes_methods.c
+Objects/bytes_methods.c
 // Objects/capsule.c
 // Objects/cellobject.c
 // Python/ceval.c
@@ -34,7 +34,7 @@ Objects/intobject.c
 // Python/mysnprintf.c
 // Objects/object.c
 // Objects/obmalloc.c
-// Python/pyctype.c
+Python/pyctype.c
 // Python/pyfpe.c
 Python/pymath.c
 // Python/pystate.c
