@@ -35,7 +35,7 @@ import weakref
 from collections import deque, UserList
 from itertools import cycle, count
 from test import support
-from test.script_helper import assert_python_ok
+from test.script_helper import assert_python_ok, run_python_until_end
 
 import codecs
 import io  # C implementation of io
@@ -717,6 +717,21 @@ class CIOTest(IOTest):
 
 class PyIOTest(IOTest):
     pass
+
+
+@support.cpython_only
+class APIMismatchTest(unittest.TestCase):
+
+    @unittest.expectedFailure  # Test to be fixed by issue9858.
+    def test_RawIOBase_io_in_pyio_match(self):
+        """Test that pyio RawIOBase class has all c RawIOBase methods"""
+        mismatch = support.detect_api_mismatch(pyio.RawIOBase, io.RawIOBase)
+        self.assertEqual(mismatch, set(), msg='Python RawIOBase does not have all C RawIOBase methods')
+
+    def test_RawIOBase_pyio_in_io_match(self):
+        """Test that c RawIOBase class has all pyio RawIOBase methods"""
+        mismatch = support.detect_api_mismatch(io.RawIOBase, pyio.RawIOBase)
+        self.assertEqual(mismatch, set(), msg='C RawIOBase does not have all Python RawIOBase methods')
 
 
 class CommonBufferedTests:
@@ -2148,6 +2163,17 @@ class TextIOWrapperTest(unittest.TestCase):
         self.assertRaises(TypeError, t.__init__, b, newline=42)
         self.assertRaises(ValueError, t.__init__, b, newline='xyzzy')
 
+    def test_uninitialized(self):
+        t = self.TextIOWrapper.__new__(self.TextIOWrapper)
+        del t
+        t = self.TextIOWrapper.__new__(self.TextIOWrapper)
+        self.assertRaises(Exception, repr, t)
+        self.assertRaisesRegex((ValueError, AttributeError),
+                               'uninitialized|has no attribute',
+                               t.read, 0)
+        t.__init__(self.MockRawIO())
+        self.assertEqual(t.read(0), '')
+
     def test_non_text_encoding_codecs_are_rejected(self):
         # Ensure the constructor complains if passed a codec that isn't
         # marked as a text encoding
@@ -2730,6 +2756,19 @@ class TextIOWrapperTest(unittest.TestCase):
             with self.open(filename, 'rb') as f:
                 self.assertEqual(f.read(), 'bbbzzz'.encode(charset))
 
+    def test_seek_append_bom(self):
+        # Same test, but first seek to the start and then to the end
+        filename = support.TESTFN
+        for charset in ('utf-8-sig', 'utf-16', 'utf-32'):
+            with self.open(filename, 'w', encoding=charset) as f:
+                f.write('aaa')
+            with self.open(filename, 'a', encoding=charset) as f:
+                f.seek(0)
+                f.seek(0, self.SEEK_END)
+                f.write('xxx')
+            with self.open(filename, 'rb') as f:
+                self.assertEqual(f.read(), 'aaaxxx'.encode(charset))
+
     def test_errors_property(self):
         with self.open(support.TESTFN, "w") as f:
             self.assertEqual(f.errors, "strict")
@@ -2996,8 +3035,6 @@ class CTextIOWrapperTest(TextIOWrapperTest):
         r = self.BytesIO(b"\xc3\xa9\n\n")
         b = self.BufferedReader(r, 1000)
         t = self.TextIOWrapper(b)
-        self.assertRaises(TypeError, t.__init__, b, newline=42)
-        self.assertRaises(ValueError, t.read)
         self.assertRaises(ValueError, t.__init__, b, newline='xyzzy')
         self.assertRaises(ValueError, t.read)
 
@@ -3437,6 +3474,49 @@ class CMiscIOTest(MiscIOTest):
         b = bytearray(2)
         self.assertRaises(ValueError, bufio.readinto, b)
 
+    @unittest.skipUnless(threading, 'Threading required for this test.')
+    def check_daemon_threads_shutdown_deadlock(self, stream_name):
+        # Issue #23309: deadlocks at shutdown should be avoided when a
+        # daemon thread and the main thread both write to a file.
+        code = """if 1:
+            import sys
+            import time
+            import threading
+
+            file = sys.{stream_name}
+
+            def run():
+                while True:
+                    file.write('.')
+                    file.flush()
+
+            thread = threading.Thread(target=run)
+            thread.daemon = True
+            thread.start()
+
+            time.sleep(0.5)
+            file.write('!')
+            file.flush()
+            """.format_map(locals())
+        res, _ = run_python_until_end("-c", code)
+        err = res.err.decode()
+        if res.rc != 0:
+            # Failure: should be a fatal error
+            self.assertIn("Fatal Python error: could not acquire lock "
+                          "for <_io.BufferedWriter name='<{stream_name}>'> "
+                          "at interpreter shutdown, possibly due to "
+                          "daemon threads".format_map(locals()),
+                          err)
+        else:
+            self.assertFalse(err.strip('.!'))
+
+    def test_daemon_threads_shutdown_stdout_deadlock(self):
+        self.check_daemon_threads_shutdown_deadlock('stdout')
+
+    def test_daemon_threads_shutdown_stderr_deadlock(self):
+        self.check_daemon_threads_shutdown_deadlock('stderr')
+
+
 class PyMiscIOTest(MiscIOTest):
     io = pyio
 
@@ -3663,7 +3743,7 @@ class PySignalsTest(SignalsTest):
 
 
 def load_tests(*args):
-    tests = (CIOTest, PyIOTest,
+    tests = (CIOTest, PyIOTest, APIMismatchTest,
              CBufferedReaderTest, PyBufferedReaderTest,
              CBufferedWriterTest, PyBufferedWriterTest,
              CBufferedRWPairTest, PyBufferedRWPairTest,

@@ -10,6 +10,24 @@ Release date: XXX
 Core and Builtins
 -----------------
 
+- Issue #22980: Under Linux, GNU/KFreeBSD and the Hurd, C extensions now include
+  the architecture triplet in the extension name, to make it easy to test builds
+  for different ABIs in the same working tree.  Under OS X, the extension name
+  now includes PEP 3149-style information.
+
+- Issue #22631: Added Linux-specific socket constant CAN_RAW_FD_FRAMES.
+  Patch courtesy of Joe Jevnik.
+
+- Issue #23731: Implement PEP 488: removal of .pyo files.
+
+- Issue #23726: Don't enable GC for user subclasses of non-GC types that
+  don't add any new fields.  Patch by Eugene Toder.
+
+- Issue #23309: Avoid a deadlock at shutdown if a daemon thread is aborted
+  while it is holding a lock to a buffered I/O object, and the main thread
+  tries to use the same I/O object (typically stdout or stderr).  A fatal
+  error is emitted instead.
+
 - Issue #22977: Fixed formatting Windows error messages on Wine.
   Patch by Martin Panter.
 
@@ -18,6 +36,38 @@ Core and Builtins
 
 Library
 -------
+
+- Issue #7159: urllib.request now supports sending auth credentials
+  automatically after the first 401.  This enhancement is a superset of the
+  enhancement from issue #19494 and supersedes that change.
+
+- Issue #23703: Fix a regression in urljoin() introduced in 901e4e52b20a.
+  Patch by Demian Brecht.
+
+- Issue #4254: Adds _curses.update_lines_cols() Patch by Arnon Yaari
+
+- Issue 19933: Provide default argument for ndigits in round. Patch by
+  Vajrasky Kok.
+
+- Issue #23193: Add a numeric_owner parameter to
+  tarfile.TarFile.extract and tarfile.TarFile.extractall. Patch by
+  Michael Vogt and Eric Smith.
+
+- Issue #23342: Add a subprocess.run() function than returns a CalledProcess
+  instance for a more consistent API than the existing call* functions.
+
+- Issue #21217: inspect.getsourcelines() now tries to compute the start and end
+  lines from the code object, fixing an issue when a lambda function is used as
+  decorator argument. Patch by Thomas Ballinger and Allison Kaptur.
+
+- Issue #23811: Add missing newline to the PyCompileError error message.
+  Patch by Alex Shkop.
+
+- Issue #21116: Avoid blowing memory when allocating a multiprocessing shared
+  array that's larger than 50% of the available RAM.  Patch by Médéric Boquien.
+
+- Issue #22982: Improve BOM handling when seeking to multiple positions of
+  a writable text file.
 
 - Issue #23464: Removed deprecated asyncio JoinableQueue.
 
@@ -29,15 +79,15 @@ Library
 - Issue #21859: Added Python implementation of io.FileIO.
 
 - Issue #23865: close() methods in multiple modules now are idempotent and more
-  robust at shutdown. If needs to release multiple resources, they are released
-  even if errors are occured.
+  robust at shutdown. If they need to release multiple resources, all are
+  released even if errors occur.
 
 - Issue #23400: Raise same exception on both Python 2 and 3 if sem_open is not
   available.  Patch by Davin Potts.
 
 - Issue #10838: The subprocess now module includes SubprocessError and
   TimeoutError in its list of exported names for the users wild enough
-  to use "from subprocess import *".
+  to use ``from subprocess import *``.
 
 - Issue #23411: Added DefragResult, ParseResult, SplitResult, DefragResultBytes,
   ParseResultBytes, and SplitResultBytes to urllib.parse.__all__.
@@ -118,6 +168,9 @@ Library
 - Issue #22117: Fix os.utime(), it now rounds the timestamp towards minus
   infinity (-inf) instead of rounding towards zero.
 
+- Issue #23310: Fix MagicMock's initializer to work with __methods__, just
+  like configure_mock().  Patch by Kasia Jachim.
+
 Build
 -----
 
@@ -137,6 +190,18 @@ Tests
 
 Tools/Demos
 -----------
+
+- Issue #18128: pygettext now uses standard +NNNN format in the
+  POT-Creation-Date header.
+
+- Issue #23935: Argument Clinic's understanding of format units
+  accepting bytes, bytearrays, and buffers is now consistent with
+  both the documentation and the implementation.
+
+- Issue #23944: Argument Clinic now wraps long impl prototypes at column 78.
+
+- Issue #20586: Argument Clinic now ensures that functions without docstrings
+  have signatures.
 
 - Issue #23492: Argument Clinic now generates argument parsing code with
   PyArg_Parse instead of PyArg_ParseTuple if possible.
@@ -340,10 +405,6 @@ Release date: 2015-03-09
 
 Core and Builtins
 -----------------
-
-- Issue #22980: Under Linux, C extensions now include bitness in the file
-  name, to make it easy to test 32-bit and 64-bit builds in the same
-  working tree.
 
 - Issue #23571: PyObject_Call() and PyCFunction_Call() now raise a SystemError
   if a function returns a result and raises an exception. The SystemError is
@@ -1081,7 +1142,7 @@ Library
   (including empty directories) in ZIP file.
 
 - Issue #22449: In the ssl.SSLContext.load_default_certs, consult the
-  enviromental variables SSL_CERT_DIR and SSL_CERT_FILE on Windows.
+  environmental variables SSL_CERT_DIR and SSL_CERT_FILE on Windows.
 
 - Issue #22508: The email.__version__ variable has been removed; the email
   code is no longer shipped separately from the stdlib, and __version__

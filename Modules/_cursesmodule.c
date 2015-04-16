@@ -586,8 +586,9 @@ current settings for the window object.
 [clinic start generated code]*/
 
 static PyObject *
-curses_window_addch_impl(PyCursesWindowObject *self, int group_left_1, int y, int x, PyObject *ch, int group_right_1, long attr)
-/*[clinic end generated code: output=9fa34a5d80151f1a input=5a41efb34a2de338]*/
+curses_window_addch_impl(PyCursesWindowObject *self, int group_left_1, int y,
+                         int x, PyObject *ch, int group_right_1, long attr)
+/*[clinic end generated code: output=99f7f85078ec06c3 input=5a41efb34a2de338]*/
 {
     PyCursesWindowObject *cwself = (PyCursesWindowObject *)self;
     int coordinates_group = group_left_1;
@@ -2865,6 +2866,13 @@ update_lines_cols(void)
     Py_DECREF(m);
     return 1;
 }
+
+static PyObject *
+PyCurses_update_lines_cols(PyObject *self)
+{
+  return PyLong_FromLong((long) update_lines_cols());
+}
+
 #endif
 
 #ifdef HAVE_CURSES_RESIZETERM
@@ -3267,6 +3275,9 @@ static PyMethodDef PyCurses_methods[] = {
     {"typeahead",           (PyCFunction)PyCurses_TypeAhead, METH_VARARGS},
     {"unctrl",              (PyCFunction)PyCurses_UnCtrl, METH_VARARGS},
     {"ungetch",             (PyCFunction)PyCurses_UngetCh, METH_VARARGS},
+#if defined(HAVE_CURSES_RESIZETERM) || defined(HAVE_CURSES_RESIZE_TERM)
+    {"update_lines_cols",   (PyCFunction)PyCurses_update_lines_cols, METH_NOARGS},
+#endif
 #ifdef HAVE_NCURSESW
     {"unget_wch",           (PyCFunction)PyCurses_Unget_Wch, METH_VARARGS},
 #endif
