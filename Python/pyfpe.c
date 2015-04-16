@@ -1,5 +1,5 @@
 #include "pyconfig.h"
-#include "pyfpe.h"
+#include "pyfpe_JyNI.h"
 /* 
  * The signal handler for SIGFPE is actually declared in an external
  * module fpectl, or as preferred by the user.  These variable

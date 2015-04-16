@@ -4,7 +4,6 @@
 #include "Python.h"
 #include <ctype.h>
 #include <float.h>
-#include <errno.h> //temporary fix for JyNI - configure should solve this in Python.h
 
 static PyObject *int_int(PyIntObject *v);
 

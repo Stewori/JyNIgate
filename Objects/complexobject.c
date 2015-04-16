@@ -237,6 +237,7 @@ PyComplex_FromCComplex(Py_complex cval)
 
     /* Inline PyObject_New */
     op = (PyComplexObject *) PyObject_MALLOC(sizeof(PyComplexObject));
+    AS_JY_NO_GC(op)->flags = JySYNC_ON_INIT_FLAGS;
     if (op == NULL)
         return PyErr_NoMemory();
     PyObject_INIT(op, &PyComplex_Type);
@@ -1351,7 +1352,7 @@ PyTypeObject PyComplex_Type = {
     0,                                          /* tp_init */
     PyType_GenericAlloc,                        /* tp_alloc */
     complex_new,                                /* tp_new */
-    PyObject_Del,                               /* tp_free */
+    PyObject_Free,                              /* tp_free */
 };
 
 #endif

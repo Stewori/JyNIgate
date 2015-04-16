@@ -1,6 +1,11 @@
 
 /* Class object implementation */
 
+/* JyNI note:
+ * Though only PyMethod would need mirroring because of the direct access
+ * macros, we also implement PyClass and PyInstance this way. We do this,
+ * because it is easier, cleaner and probably more performant.
+ */
 #include "Python.h"
 #include "structmember.h"
 
@@ -672,10 +677,11 @@ instance_dealloc(register PyInstanceObject *inst)
             If this occurs, clear them out without calling their
             finalizers since they might rely on part of the object
             being finalized that has already been destroyed. */
-        while (inst->in_weakreflist != NULL) {
-            _PyWeakref_ClearRef((PyWeakReference *)
-                                (inst->in_weakreflist));
-        }
+// JyNI-todo: Fix this
+//      while (inst->in_weakreflist != NULL) {
+//          _PyWeakref_ClearRef((PyWeakReference *)
+//                              (inst->in_weakreflist));
+//      }
 
         Py_DECREF(inst->in_class);
         Py_XDECREF(inst->in_dict);
@@ -1389,6 +1395,7 @@ instance_contains(PyInstanceObject *inst, PyObject *member)
          * __contains__ attribute, and try iterating instead.
          */
         PyErr_Clear();
+//JyNI todo: provide _PySequence_IterSearch
         rc = _PySequence_IterSearch((PyObject *)inst, member,
                                     PY_ITERSEARCH_CONTAINS);
         if (rc >= 0)
@@ -1973,6 +1980,10 @@ init_name_op(void)
         "__ge__",
     };
 
+/* JyNI-note: On first look this looks alarming, but no actual
+   PyObjects are allocated, but only pointers - so no danger of
+   segfaults with AS_JY or FROM_JY.
+*/
     name_op = (PyObject **)malloc(sizeof(PyObject *) * NAME_OPS);
     if (name_op == NULL)
         return -1;
@@ -2052,7 +2063,7 @@ instance_richcompare(PyObject *v, PyObject *w, int op)
     return Py_NotImplemented;
 }
 
-
+//>>
 /* Get the iterator */
 static PyObject *
 instance_getiter(PyInstanceObject *self)
@@ -2094,7 +2105,7 @@ instance_getiter(PyInstanceObject *self)
     Py_DECREF(func);
     return PySeqIter_New((PyObject *)self);
 }
-
+//<<
 
 /* Call the iterator's next */
 static PyObject *
@@ -2227,7 +2238,7 @@ PyTypeObject PyInstance_Type = {
     0,                                          /* tp_clear */
     instance_richcompare,                       /* tp_richcompare */
     offsetof(PyInstanceObject, in_weakreflist), /* tp_weaklistoffset */
-    (getiterfunc)instance_getiter,              /* tp_iter */
+    0, //(getiterfunc)instance_getiter,         /* tp_iter */
     (iternextfunc)instance_iternext,            /* tp_iternext */
     0,                                          /* tp_methods */
     0,                                          /* tp_members */

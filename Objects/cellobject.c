@@ -40,6 +40,13 @@ PyCell_Set(PyObject *op, PyObject *obj)
     Py_XINCREF(obj);
     PyCell_SET(op, obj);
     Py_XDECREF(oldobj);
+    JyObject* jy = AS_JY_WITH_GC(op);
+    if (JyObject_IS_INITIALIZED(jy))
+    {
+        env(-1);
+        (*env)->SetObjectField(env, jy->jy, pyCell_ob_ref,
+                    JyNI_JythonPyObject_FromPyObject(obj));
+	}
     return 0;
 }
 

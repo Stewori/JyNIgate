@@ -7,10 +7,10 @@
    */
 
 /* enable more aggressive intra-module optimizations, where available */
-#define PY_LOCAL_AGGRESSIVE
+//#define PY_LOCAL_AGGRESSIVE
 
 #include "Python.h"
-
+//>>
 #include "code.h"
 #include "frameobject.h"
 #include "eval.h"
@@ -233,11 +233,12 @@ PyEval_GetCallStats(PyObject *self)
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
-#include "pythread.h"
+//<<
+#include "pythread_JyNI.h"
 
 static PyThread_type_lock interpreter_lock = 0; /* This is the GIL */
-static PyThread_type_lock pending_lock = 0; /* for pending calls */
-static long main_thread = 0;
+//static PyThread_type_lock pending_lock = 0; /* for pending calls */
+//static long main_thread = 0;
 
 int
 PyEval_ThreadsInitialized(void)
@@ -251,8 +252,8 @@ PyEval_InitThreads(void)
     if (interpreter_lock)
         return;
     interpreter_lock = PyThread_allocate_lock();
-    PyThread_acquire_lock(interpreter_lock, 1);
-    main_thread = PyThread_get_thread_ident();
+    //PyThread_acquire_lock(interpreter_lock, 1);
+    //main_thread = PyThread_get_thread_ident();
 }
 
 void
@@ -266,7 +267,7 @@ PyEval_ReleaseLock(void)
 {
     PyThread_release_lock(interpreter_lock);
 }
-
+//>>
 void
 PyEval_AcquireThread(PyThreadState *tstate)
 {
@@ -330,7 +331,7 @@ PyEval_ReInitThreads(void)
     Py_DECREF(threading);
 }
 #endif
-
+//<<
 /* Functions save_thread and restore_thread are always defined so
    dynamically loaded modules needn't be compiled separately for use
    with and without threads: */
@@ -363,7 +364,7 @@ PyEval_RestoreThread(PyThreadState *tstate)
     PyThreadState_Swap(tstate);
 }
 
-
+//>>
 /* Mechanism whereby asynchronously executing callbacks (e.g. UNIX
    signal handlers or Mac I/O completion routines) can schedule calls
    to a function to be called synchronously.
@@ -586,7 +587,7 @@ Py_MakePendingCalls(void)
 }
 
 #endif /* WITH_THREAD */
-
+//<<
 
 /* The interpreter's recursion limit */
 
@@ -602,11 +603,23 @@ Py_GetRecursionLimit(void)
     return recursion_limit;
 }
 
+inline void
+Py_SetRecursionLimitNative(int new_limit)
+{
+	recursion_limit = new_limit;
+	_Py_CheckRecursionLimit = recursion_limit;
+}
+
 void
 Py_SetRecursionLimit(int new_limit)
 {
-    recursion_limit = new_limit;
-    _Py_CheckRecursionLimit = recursion_limit;
+    Py_SetRecursionLimitNative(new_limit);
+    /* set Jython's recursion limit here too: */
+    env();
+    (*env)->CallStaticIntMethod(env, JyTStateClass,
+                JyTState_setRecursionLimit, new_limit);
+	(*env)->SetStaticIntField(env, JyTStateClass,
+                JyTState_nativeRecursionLimitField, new_limit);
 }
 
 /* the macro Py_EnterRecursiveCall() only calls _Py_CheckRecursiveCall()
@@ -636,7 +649,7 @@ _Py_CheckRecursiveCall(char *where)
     _Py_CheckRecursionLimit = recursion_limit;
     return 0;
 }
-
+//>>
 /* Status code for main loop (reason for stack unwind) */
 enum why_code {
         WHY_NOT =       0x0001, /* No error */
@@ -657,12 +670,12 @@ static int unpack_iterable(PyObject *, int, PyObject **);
    This speeds up the if statement in PyEval_EvalFrameEx() after
    fast_next_opcode*/
 static int _Py_TracingPossible = 0;
-
+//<<
 /* for manipulating the thread switch and periodic "stuff" - used to be
    per thread, now just a pair o' globals */
 int _Py_CheckInterval = 100;
 volatile int _Py_Ticker = 0; /* so that we hit a "tick" first thing */
-
+//>>
 PyObject *
 PyEval_EvalCode(PyCodeObject *co, PyObject *globals, PyObject *locals)
 {
@@ -3830,14 +3843,19 @@ PyEval_GetFrame(void)
     PyThreadState *tstate = PyThreadState_GET();
     return _PyThreadState_GetFrame(tstate);
 }
-
+//<<
 int
 PyEval_GetRestricted(void)
 {
-    PyFrameObject *current_frame = PyEval_GetFrame();
-    return current_frame == NULL ? 0 : PyFrame_IsRestricted(current_frame);
+    /*
+     * JyNI-note:
+     * Jython does not support restricted mode, so we let this always return
+     * false. However we implement this method as a stub in case Jython
+     * would someday add support for restricted mode.
+     */
+    return 0;
 }
-
+//>>
 int
 PyEval_MergeCompilerFlags(PyCompilerFlags *cf)
 {
@@ -3871,7 +3889,7 @@ Py_FlushLine(void)
         return 0;
     return PyFile_WriteString("\n", f);
 }
-
+//<<
 
 /* External interface to call any callable object.
    The arg must be a tuple or NULL.  The kw must be a dict or NULL. */
@@ -3905,7 +3923,7 @@ PyEval_CallObjectWithKeywords(PyObject *func, PyObject *arg, PyObject *kw)
     Py_DECREF(arg);
     return result;
 }
-
+//>>
 const char *
 PyEval_GetFuncName(PyObject *func)
 {
@@ -4352,7 +4370,7 @@ ext_call_fail:
     Py_XDECREF(stararg);
     return result;
 }
-
+//<<
 /* Extract a slice index from a PyInt or PyLong or an object with the
    nb_index slot defined, and store in *pi.
    Silently reduce values larger than PY_SSIZE_T_MAX to PY_SSIZE_T_MAX,
@@ -4390,7 +4408,7 @@ _PyEval_SliceIndex(PyObject *v, Py_ssize_t *pi)
     }
     return 1;
 }
-
+//>>
 #undef ISINDEX
 #define ISINDEX(x) ((x) == NULL || \
                     PyInt_Check(x) || PyLong_Check(x) || PyIndex_Check(x))
@@ -4915,3 +4933,4 @@ _Py_GetDXProfile(PyObject *self, PyObject *args)
 }
 
 #endif
+//<<

@@ -10,6 +10,21 @@ CPython-bugfixes can be merged easily into this code via git's merging-system.
 A list of files is periodically copied over to JyNI from this repository
 (available in JyNI-files.txt).
 
+Usage
+-----
+
+The scrip JyNIgate.py moves all files in JyNI-files.txt to JyNI, assuming that
+JyNIgate and JyNI are placed in the same workspace super-folder.
+It prepends the text from JyNI-copy-intro.txt, replaces
+"#include Python.h" by "#include JyNI.h", replaces spaces by tabstops
+(4 spaces -> one tab) and applies the following multi-line comment instruction:
+Writing "//>>" means that all following lines will be made comments by
+prepending"//", until "//<<" appears.
+"//>>" and "//<<" must be the only text in that lines in order to make JyNIgate
+recognize it. In the result, this lines itself will not appear. An alternative
+multi-comment style was needed, because "/*" and "*/" are frequently used in
+CPython-code and are thus not sufficient to easily disable vast amounts of code.
+
 We append the original CPython-README to this note:
 
 

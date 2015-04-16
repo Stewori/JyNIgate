@@ -25,7 +25,7 @@ the expense of doing their own locking).
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+//>>
 #ifdef WITH_THREAD
 #include "pythread.h"
 static PyThread_type_lock head_mutex = NULL; /* Protects interp->tstate_head */
@@ -45,8 +45,9 @@ static int autoTLSkey = 0;
 #endif
 
 static PyInterpreterState *interp_head = NULL;
-
+//<<
 PyThreadState *_PyThreadState_Current = NULL;
+//>>
 PyThreadFrameGetter _PyThreadState_GetFrame = NULL;
 
 #ifdef WITH_THREAD
@@ -321,7 +322,7 @@ PyThreadState_DeleteCurrent()
     PyEval_ReleaseLock();
 }
 #endif /* WITH_THREAD */
-
+//<<
 
 PyThreadState *
 PyThreadState_Get(void)
@@ -343,6 +344,7 @@ PyThreadState_Swap(PyThreadState *newts)
        to be used for a thread.  Check this the best we can in debug
        builds.
     */
+//>>
 #if defined(Py_DEBUG) && defined(WITH_THREAD)
     if (newts) {
         /* This can be called from PyEval_RestoreThread(). Similar
@@ -355,9 +357,10 @@ PyThreadState_Swap(PyThreadState *newts)
         errno = err;
     }
 #endif
+//<<
     return oldts;
 }
-
+//>>
 /* An extension mechanism to store arbitrary additional per-thread state.
    PyThreadState_GetDict() returns a dictionary that can be used to hold such
    state; the caller should pick a unique key and store its state there.  If
@@ -657,7 +660,7 @@ PyGILState_Release(PyGILState_STATE oldstate)
 }
 
 #endif /* WITH_THREAD */
-
+//<<
 #ifdef __cplusplus
 }
 #endif

@@ -1,25 +1,25 @@
-// Python/_warnings.c
+// Python/_warnings.c            (postpone)
 // Objects/abstract.c            (won't support soon)
-// Objects/boolobject.c
-// Objects/bufferobject.c
+Objects/boolobject.c
+// Objects/bufferobject.c        (postponed)
 Objects/bytes_methods.c
-// Objects/capsule.c
-// Objects/cellobject.c
-// Python/ceval.c
-// Objects/classobject.c
-// Objects/cobject.c
-// Python/codecs.c
-// Objects/codeobject.c
-// Objects/complexobject.c
-// Objects/descrobject.c
+Objects/capsule.c
+Objects/cellobject.c
+Python/ceval.c
+Objects/classobject.c
+Objects/cobject.c
+// Python/codecs.c               (won't support soon)
+// Objects/codeobject.c          (postponed)
+Objects/complexobject.c
+Objects/descrobject.c
 // Objects/dictobject.c          (won't support soon)
-// Python/dtoa.c
-// Python/dynload_shlib.c
+Python/dtoa.c
+Python/dynload_shlib.c
 // Python/errors.c
 // Objects/exceptions.c
 // Objects/fileobject.c
-// Objects/floatobject.c
-// Python/formatter_unicode.c
+Objects/floatobject.c
+Python/formatter_unicode.c
 // Objects/funcobject.c
 // Modules/gcmodule.c
 // Python/getargs.c
@@ -27,25 +27,25 @@ Objects/bytes_methods.c
 // Python/importdl.c
 Objects/intobject.c
 // Objects/listobject.c
-// Objects/longobject.c
+Objects/longobject.c
 // Objects/methodobject.c
 // Python/modsupport.c
 // Objects/moduleobject.c
-// Python/mysnprintf.c
+Python/mysnprintf.c
 // Objects/object.c
 // Objects/obmalloc.c
 Python/pyctype.c
-// Python/pyfpe.c
+Python/pyfpe.c
 Python/pymath.c
-// Python/pystate.c
+Python/pystate.c
 // Python/pythonrun.c
 // Objects/setobject.c
-// Python/sigcheck.c
+Python/sigcheck.c
 // Objects/sliceobject.c
 // Objects/stringobject.c
-// Python/structmember.c
+Python/structmember.c
 // Python/sysmodule.c
-// thread_JyNI.c
+// thread_JyNI.c                 (won't support soon)
 // Python/traceback.c
 // Objects/tupleobject.c
 // Objects/typeobject.c

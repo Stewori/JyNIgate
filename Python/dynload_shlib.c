@@ -109,7 +109,7 @@ dl_funcptr _PyImport_GetDynLoadFunc(const char *fqname, const char *shortname,
     }
 
 #if !(defined(PYOS_OS2) && defined(PYCC_GCC))
-    dlopenflags = PyThreadState_GET()->interp->dlopenflags;
+    dlopenflags = JyNI_GetDLOpenFlags();
 #endif
 
     if (Py_VerboseFlag)

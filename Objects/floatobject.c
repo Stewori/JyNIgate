@@ -5,7 +5,7 @@
    for any kind of float exception without losing portability. */
 
 #include "Python.h"
-#include "structseq.h"
+#include "structseq_JyNI.h"
 
 #include <ctype.h>
 #include <float.h>
@@ -27,7 +27,7 @@ extern int finite(double);
 
 struct _floatblock {
     struct _floatblock *next;
-    PyFloatObject objects[N_FLOATOBJECTS];
+    JyFloatObject objects[N_FLOATOBJECTS];
 };
 
 typedef struct _floatblock PyFloatBlock;
@@ -38,9 +38,9 @@ static PyFloatObject *free_list = NULL;
 static PyFloatObject *
 fill_free_list(void)
 {
-    PyFloatObject *p, *q;
+    JyFloatObject *p, *q;
     /* XXX Float blocks escape the object heap. Use PyObject_MALLOC ??? */
-    p = (PyFloatObject *) PyMem_MALLOC(sizeof(PyFloatBlock));
+    p = (JyFloatObject *) PyMem_MALLOC(sizeof(PyFloatBlock));
     if (p == NULL)
         return (PyFloatObject *) PyErr_NoMemory();
     ((PyFloatBlock *)p)->next = block_list;
@@ -48,9 +48,13 @@ fill_free_list(void)
     p = &((PyFloatBlock *)p)->objects[0];
     q = p + N_FLOATOBJECTS;
     while (--q > p)
-        Py_TYPE(q) = (struct _typeobject *)(q-1);
-    Py_TYPE(q) = NULL;
-    return p + N_FLOATOBJECTS - 1;
+//Modified for JyNI:
+    {
+        Py_TYPE(FROM_JY_NO_GC(q)) = (struct _typeobject *)(FROM_JY_NO_GC(q-1));
+        Jy_InitImmutable((JyObject*) q);
+    }
+    Py_TYPE(FROM_JY_NO_GC(q)) = NULL;
+    return (PyFloatObject*) FROM_JY_NO_GC(p + N_FLOATOBJECTS - 1);
 }
 
 double
@@ -240,6 +244,8 @@ static void
 float_dealloc(PyFloatObject *op)
 {
     if (PyFloat_CheckExact(op)) {
+        JyObject* jy = AS_JY_NO_GC(op);
+        JyNI_CleanUp_JyObject(jy);
         Py_TYPE(op) = (struct _typeobject *)free_list;
         free_list = op;
     }
@@ -2205,7 +2211,7 @@ _PyFloat_Init(void)
 int
 PyFloat_ClearFreeList(void)
 {
-    PyFloatObject *p;
+    JyFloatObject *p;
     PyFloatBlock *list, *next;
     int i;
     int u;                      /* remaining unfreed ints per block */
@@ -2219,7 +2225,8 @@ PyFloat_ClearFreeList(void)
         for (i = 0, p = &list->objects[0];
              i < N_FLOATOBJECTS;
              i++, p++) {
-            if (PyFloat_CheckExact(p) && Py_REFCNT(p) != 0)
+            if (PyFloat_CheckExact(FROM_JY_NO_GC(p)) &&
+                        p->pyFloat.ob_refcnt != 0)
                 u++;
         }
         next = list->next;
@@ -2229,11 +2236,12 @@ PyFloat_ClearFreeList(void)
             for (i = 0, p = &list->objects[0];
                  i < N_FLOATOBJECTS;
                  i++, p++) {
-                if (!PyFloat_CheckExact(p) ||
-                    Py_REFCNT(p) == 0) {
-                    Py_TYPE(p) = (struct _typeobject *)
+                if (!PyFloat_CheckExact(FROM_JY_NO_GC(p)) ||
+                            p->pyFloat.ob_refcnt == 0) {
+                    JyNI_CleanUp_JyObject((JyObject*) p);
+                    Py_TYPE(FROM_JY_NO_GC(p)) = (struct _typeobject *)
                         free_list;
-                    free_list = p;
+                    free_list = FROM_JY_NO_GC(p);
                 }
             }
         }
@@ -2249,14 +2257,17 @@ PyFloat_ClearFreeList(void)
 void
 PyFloat_Fini(void)
 {
-    PyFloatObject *p;
+    JyFloatObject *p;
     PyFloatBlock *list;
     int i;
     int u;                      /* total unfreed floats per block */
 
     u = PyFloat_ClearFreeList();
 
-    if (!Py_VerboseFlag)
+    env();
+    jint Py_VerboseFlag = (*env)->CallStaticIntMethod(env, JyNIClass,
+                JyNIGetDLVerbose);
+	if (!Py_VerboseFlag)
         return;
     fprintf(stderr, "# cleanup floats");
     if (!u) {
@@ -2273,10 +2284,10 @@ PyFloat_Fini(void)
             for (i = 0, p = &list->objects[0];
                  i < N_FLOATOBJECTS;
                  i++, p++) {
-                if (PyFloat_CheckExact(p) &&
-                    Py_REFCNT(p) != 0) {
+                if (PyFloat_CheckExact(FROM_JY_NO_GC(p)) &&
+                            p->pyFloat.ob_refcnt != 0) {
                     char *buf = PyOS_double_to_string(
-                        PyFloat_AS_DOUBLE(p), 'r',
+                        PyFloat_AS_DOUBLE(FROM_JY_NO_GC(p)), 'r',
                         0, 0, NULL);
                     if (buf) {
                         /* XXX(twouters) cast
@@ -2287,8 +2298,9 @@ PyFloat_Fini(void)
                         */
                         fprintf(stderr,
                  "#   <float at %p, refcnt=%ld, val=%s>\n",
-                                    p, (long)Py_REFCNT(p), buf);
-                                    PyMem_Free(buf);
+                                FROM_JY_NO_GC(p),
+                                (long) p->pyFloat.ob_refcnt, buf);
+                                PyMem_Free(buf);
                             }
                 }
             }

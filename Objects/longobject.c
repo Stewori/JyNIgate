@@ -3,8 +3,8 @@
 /* XXX The functional organization of this file is terrible */
 
 #include "Python.h"
-#include "longintrepr.h"
-#include "structseq.h"
+#include "longintrepr_JyNI.h"
+#include "structseq_JyNI.h"
 
 #include <float.h>
 #include <ctype.h>
@@ -4348,7 +4348,7 @@ PyTypeObject PyLong_Type = {
     0,                                          /* tp_init */
     0,                                          /* tp_alloc */
     long_new,                                   /* tp_new */
-    PyObject_Del,                               /* tp_free */
+    PyObject_Free,                              /* tp_free */
 };
 
 static PyTypeObject Long_InfoType;
