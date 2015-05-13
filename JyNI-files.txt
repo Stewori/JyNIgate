@@ -1,4 +1,4 @@
-// Python/_warnings.c            (postpone)
+// Python/_warnings.c            (postponed)
 // Objects/abstract.c            (won't support soon)
 Objects/boolobject.c
 // Objects/bufferobject.c        (postponed)
@@ -33,7 +33,7 @@ Objects/longobject.c
 // Objects/moduleobject.c
 Python/mysnprintf.c
 // Objects/object.c
-// Objects/obmalloc.c
+Objects/obmalloc.c
 Python/pyctype.c
 Python/pyfpe.c
 Python/pymath.c

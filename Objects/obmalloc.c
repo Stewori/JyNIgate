@@ -786,8 +786,25 @@ int Py_ADDRESS_IN_RANGE(void *P, poolp pool) Py_NO_INLINE;
  */
 
 #undef PyObject_Malloc
+
+/* JyNI-note: Though this method might not only be used for PyObject-
+ * allocation, we always prepend a JyObject. We regard this slight
+ * overhead in non-PyObject cases as preferable over potential
+ * segmentation-fault if a PyObject is created via PyObject_NEW or
+ * PyObject_NEW_VAR.
+ */
 void *
 PyObject_Malloc(size_t nbytes)
+{
+	JyObject* er = PyObject_RawMalloc(sizeof(JyObject) + nbytes);
+	er->attr = NULL;
+	er->flags = 0;
+	er->jy = NULL;
+	return FROM_JY_NO_GC(er);
+}
+
+void *
+PyObject_RawMalloc(size_t nbytes)
 {
     block *bp;
     poolp pool;
@@ -992,6 +1009,15 @@ redirect:
 ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
 void
 PyObject_Free(void *p)
+{
+	//this is identical with former JyNI_Del.
+	JyObject* jy = AS_JY_NO_GC(p);
+	JyNI_CleanUp_JyObject(jy);
+	PyObject_RawFree(jy);
+}
+
+void
+PyObject_RawFree(void *p)
 {
     poolp pool;
     block *lastfree;
@@ -1224,6 +1250,13 @@ ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
 void *
 PyObject_Realloc(void *p, size_t nbytes)
 {
+	//header should be approprietly copied by underlying call to RawRealloc.
+	return FROM_JY_NO_GC(PyObject_RawRealloc(AS_JY_NO_GC(p), nbytes+sizeof(JyObject)));
+}
+
+void *
+PyObject_RawRealloc(void *p, size_t nbytes)
+{
     void *bp;
     poolp pool;
     size_t size;
@@ -1269,10 +1302,10 @@ PyObject_Realloc(void *p, size_t nbytes)
             }
             size = nbytes;
         }
-        bp = PyObject_Malloc(nbytes);
+        bp = PyObject_RawMalloc(nbytes);
         if (bp != NULL) {
             memcpy(bp, p, size);
-            PyObject_Free(p);
+            PyObject_RawFree(p);
         }
         return bp;
     }
@@ -1307,8 +1340,24 @@ PyObject_Realloc(void *p, size_t nbytes)
 /* pymalloc not enabled:  Redirect the entry points to malloc.  These will
  * only be used by extensions that are compiled with pymalloc enabled. */
 
+/* JyNI-note: Though this method might not only be used for PyObject-
+ * allocation, we always prepend a JyObject. We regard this slight
+ * overhead in non-PyObject cases as preferable over potential
+ * segmentation-fault if a PyObject is created via PyObject_NEW or
+ * PyObject_NEW_VAR.
+ */
 void *
 PyObject_Malloc(size_t n)
+{
+	JyObject* er = PyObject_RawMalloc(sizeof(JyObject) + n);
+	er->attr = NULL;
+	er->flags = 0;
+	er->jy = NULL;
+	return FROM_JY_NO_GC(er);
+}
+
+void *
+PyObject_RawMalloc(size_t n)
 {
     return PyMem_MALLOC(n);
 }
@@ -1316,11 +1365,27 @@ PyObject_Malloc(size_t n)
 void *
 PyObject_Realloc(void *p, size_t n)
 {
+	//header should be approprietly copied by underlying call to RawRealloc.
+	return FROM_JY_NO_GC(PyObject_RawRealloc(AS_JY_NO_GC(p), n+sizeof(JyObject)));
+}
+
+void *
+PyObject_RawRealloc(void *p, size_t n)
+{
     return PyMem_REALLOC(p, n);
 }
 
 void
 PyObject_Free(void *p)
+{
+	//this is identical with former JyNI_Del.
+	JyObject* jy = AS_JY_NO_GC(p);
+	JyNI_CleanUp_JyObject(jy);
+	PyObject_RawFree(jy);
+}
+
+void
+PyObject_RawFree(void *p)
 {
     PyMem_FREE(p);
 }
@@ -1491,7 +1556,7 @@ _PyObject_DebugMallocApi(char id, size_t nbytes)
         /* overflow:  can't represent total as a size_t */
         return NULL;
 
-    p = (uchar *)PyObject_Malloc(total);
+    p = (uchar *)PyObject_RawMalloc(total);
     if (p == NULL)
         return NULL;
 
@@ -1529,7 +1594,7 @@ _PyObject_DebugFreeApi(char api, void *p)
     nbytes += 4*SST;
     if (nbytes > 0)
         memset(q, DEADBYTE, nbytes);
-    PyObject_Free(q);
+    PyObject_RawFree(q);
 }
 
 void *
@@ -1561,7 +1626,7 @@ _PyObject_DebugReallocApi(char api, void *p, size_t nbytes)
      * case we didn't get the chance to mark the old memory with DEADBYTE,
      * but we live with that.
      */
-    q = (uchar *)PyObject_Realloc(q - 2*SST, total);
+    q = (uchar *)PyObject_RawRealloc(q - 2*SST, total);
     if (q == NULL)
         return NULL;
 
