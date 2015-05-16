@@ -13,6 +13,15 @@ Core and Builtins
 Library
 -------
 
+- Issue #20014: array.array() now accepts unicode typecodes.  Based on patch by
+  Vajrasky Kok.
+
+- Issue #23637: Showing a warning no longer fails with UnicodeErrror.
+  Formatting unicode warning in the file with the path containing non-ascii
+  characters no longer fails with UnicodeErrror.
+
+- Issue #24134: Reverted issue #24134 changes.
+
 
 What's New in Python 2.7.10 release candidate 1?
 ================================================
