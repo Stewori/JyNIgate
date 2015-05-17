@@ -47,7 +47,7 @@ Python/structmember.c
 // Python/sysmodule.c
 // thread_JyNI.c                 (won't support soon)
 // Python/traceback.c
-// Objects/tupleobject.c
+Objects/tupleobject.c
 // Objects/typeobject.c
 // Objects/unicodeobject.c
 Parser/intrcheck.c > intrcheck.c

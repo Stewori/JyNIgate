@@ -225,6 +225,7 @@ tupledealloc(register PyTupleObject *op)
             numfree[len] < PyTuple_MAXFREELIST &&
             Py_TYPE(op) == &PyTuple_Type)
         {
+            JyNI_CleanUp_JyObject(AS_JY_WITH_GC(op));
             op->ob_item[0] = (PyObject *) free_list[len];
             numfree[len]++;
             free_list[len] = op;
