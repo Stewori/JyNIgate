@@ -10,8 +10,19 @@
 Py_ssize_t null_strings, one_strings;
 #endif
 
+//JyNI: We assume string to have no GC or truncated-flags...
+//The end of this macro misses a semicolon to make calls
+//look more natural.
+#define JyNI_PyString_ALLOC(basicsize, op) \
+JyObject* jy = (JyObject*) PyObject_RawMalloc(basicsize + sizeof(JyObject)); \
+if (jy == NULL) return PyErr_NoMemory(); \
+jy->jy = NULL; \
+jy->attr = NULL; \
+jy->flags = JySYNC_ON_INIT_FLAGS; \
+op = (PyStringObject *) FROM_JY_NO_GC(jy)
+
 static PyStringObject *characters[UCHAR_MAX + 1];
-static PyStringObject *nullstring;
+/*static*/ PyStringObject *nullstring; //not static in JyNI to use it with extern in JyNI.h
 
 /* This dictionary holds all interned strings.  Note that references to
    strings in this dictionary are *not* counted in the string's ob_refcnt.
@@ -85,9 +96,9 @@ PyString_FromStringAndSize(const char *str, Py_ssize_t size)
     }
 
     /* Inline PyObject_NewVar */
-    op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + size);
-    if (op == NULL)
-        return PyErr_NoMemory();
+    //op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + size);
+    //if (op == NULL) return PyErr_NoMemory();
+    JyNI_PyString_ALLOC(PyStringObject_SIZE + size, op);
     PyObject_INIT_VAR(op, &PyString_Type, size);
     op->ob_shash = -1;
     op->ob_sstate = SSTATE_NOT_INTERNED;
@@ -119,7 +130,7 @@ PyString_FromString(const char *str)
 
     assert(str != NULL);
     size = strlen(str);
-    if (size > PY_SSIZE_T_MAX - PyStringObject_SIZE) {
+    if (size > PY_SSIZE_T_MAX - PyStringObject_SIZE - sizeof(JyObject)) {
         PyErr_SetString(PyExc_OverflowError,
             "string is too long for a Python string");
         return NULL;
@@ -140,9 +151,9 @@ PyString_FromString(const char *str)
     }
 
     /* Inline PyObject_NewVar */
-    op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + size);
-    if (op == NULL)
-        return PyErr_NoMemory();
+    //op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + size);
+    //if (op == NULL) return PyErr_NoMemory();
+    JyNI_PyString_ALLOC(PyStringObject_SIZE + size, op);
     PyObject_INIT_VAR(op, &PyString_Type, size);
     op->ob_shash = -1;
     op->ob_sstate = SSTATE_NOT_INTERNED;
@@ -839,9 +850,9 @@ PyString_AsStringAndSize(register PyObject *obj,
 #include "stringlib/stringdefs.h"
 #include "stringlib/fastsearch.h"
 
-#include "stringlib/count.h"
+//#include "stringlib/count.h"
 #include "stringlib/find.h"
-#include "stringlib/partition.h"
+//#include "stringlib/partition.h"
 #include "stringlib/split.h"
 
 #define _Py_InsertThousandsGrouping _PyString_InsertThousandsGrouping
@@ -1022,8 +1033,8 @@ string_concat(register PyStringObject *a, register PyObject *bb)
         if (PyUnicode_Check(bb))
             return PyUnicode_Concat((PyObject *)a, bb);
 #endif
-        if (PyByteArray_Check(bb))
-            return PyByteArray_Concat((PyObject *)a, bb);
+//        if (PyByteArray_Check(bb))
+//            return PyByteArray_Concat((PyObject *)a, bb);
         PyErr_Format(PyExc_TypeError,
                      "cannot concatenate 'str' and '%.200s' objects",
                      Py_TYPE(bb)->tp_name);
@@ -1058,9 +1069,9 @@ string_concat(register PyStringObject *a, register PyObject *bb)
                         "strings are too large to concat");
         return NULL;
     }
-    op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + size);
-    if (op == NULL)
-        return PyErr_NoMemory();
+    //op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + size);
+    //if (op == NULL) return PyErr_NoMemory();
+    JyNI_PyString_ALLOC(PyStringObject_SIZE + size, op);
     PyObject_INIT_VAR(op, &PyString_Type, size);
     op->ob_shash = -1;
     op->ob_sstate = SSTATE_NOT_INTERNED;
@@ -1100,9 +1111,9 @@ string_repeat(register PyStringObject *a, register Py_ssize_t n)
             "repeated string is too long");
         return NULL;
     }
-    op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + nbytes);
-    if (op == NULL)
-        return PyErr_NoMemory();
+    //op = (PyStringObject *)PyObject_MALLOC(PyStringObject_SIZE + nbytes);
+    //if (op == NULL) return PyErr_NoMemory();
+    JyNI_PyString_ALLOC(PyStringObject_SIZE + nbytes, op);
     PyObject_INIT_VAR(op, &PyString_Type, size);
     op->ob_shash = -1;
     op->ob_sstate = SSTATE_NOT_INTERNED;
@@ -1259,6 +1270,7 @@ _PyString_Eq(PyObject *o1, PyObject *o2)
       && memcmp(a->ob_sval, b->ob_sval, Py_SIZE(a)) == 0;
 }
 
+//>>
 static long
 string_hash(PyStringObject *a)
 {
@@ -1292,6 +1304,7 @@ string_hash(PyStringObject *a)
     a->ob_shash = x;
     return x;
 }
+//<<
 
 static PyObject*
 string_subscript(PyStringObject* self, PyObject* item)
@@ -1395,6 +1408,7 @@ string_buffer_getcharbuf(PyStringObject *self, Py_ssize_t index, const char **pt
     return Py_SIZE(self);
 }
 
+//>>
 static int
 string_buffer_getbuffer(PyStringObject *self, Py_buffer *view, int flags)
 {
@@ -1402,6 +1416,7 @@ string_buffer_getbuffer(PyStringObject *self, Py_buffer *view, int flags)
                              (void *)self->ob_sval, Py_SIZE(self),
                              1, flags);
 }
+//<<
 
 static PySequenceMethods string_as_sequence = {
     (lenfunc)string_length, /*sq_length*/
@@ -1425,7 +1440,7 @@ static PyBufferProcs string_as_buffer = {
     (writebufferproc)string_buffer_getwritebuf,
     (segcountproc)string_buffer_getsegcount,
     (charbufferproc)string_buffer_getcharbuf,
-    (getbufferproc)string_buffer_getbuffer,
+//  (getbufferproc)string_buffer_getbuffer,
     0, /* XXX */
 };
 
@@ -3571,9 +3586,10 @@ string_splitlines(PyStringObject *self, PyObject *args)
     );
 }
 
+//>>
 PyDoc_STRVAR(sizeof__doc__,
 "S.__sizeof__() -> size of S in memory, in bytes");
-
+//This is rather meaningless in JyNI so we try to get away without it.
 static PyObject *
 string_sizeof(PyStringObject *v)
 {
@@ -3581,6 +3597,7 @@ string_sizeof(PyStringObject *v)
     res = PyStringObject_SIZE + PyString_GET_SIZE(v) * Py_TYPE(v)->tp_itemsize;
     return PyInt_FromSsize_t(res);
 }
+//<<
 
 static PyObject *
 string_getnewargs(PyStringObject *v)
@@ -3685,8 +3702,8 @@ string_methods[] = {
      expandtabs__doc__},
     {"splitlines", (PyCFunction)string_splitlines, METH_VARARGS,
      splitlines__doc__},
-    {"__sizeof__", (PyCFunction)string_sizeof, METH_NOARGS,
-     sizeof__doc__},
+//  {"__sizeof__", (PyCFunction)string_sizeof, METH_NOARGS,
+//   sizeof__doc__},
     {"__getnewargs__",          (PyCFunction)string_getnewargs, METH_NOARGS},
     {NULL,     NULL}                         /* sentinel */
 };
@@ -3782,7 +3799,7 @@ PyTypeObject PyBaseString_Type = {
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,   /* tp_flags */
     basestring_doc,                             /* tp_doc */
     0,                                          /* tp_traverse */
     0,                                          /* tp_clear */
@@ -3824,7 +3841,7 @@ PyTypeObject PyString_Type = {
     &string_as_number,                          /* tp_as_number */
     &string_as_sequence,                        /* tp_as_sequence */
     &string_as_mapping,                         /* tp_as_mapping */
-    (hashfunc)string_hash,                      /* tp_hash */
+    0,//(hashfunc)string_hash,                  /* tp_hash */
     0,                                          /* tp_call */
     string_str,                                 /* tp_str */
     PyObject_GenericGetAttr,                    /* tp_getattro */
@@ -3851,7 +3868,7 @@ PyTypeObject PyString_Type = {
     0,                                          /* tp_init */
     0,                                          /* tp_alloc */
     string_new,                                 /* tp_new */
-    PyObject_Del,                               /* tp_free */
+    PyObject_Free,//PyObject_Del,               /* tp_free */
 };
 
 void
@@ -3907,13 +3924,18 @@ _PyString_Resize(PyObject **pv, Py_ssize_t newsize)
     /* XXX UNREF/NEWREF interface should be more symmetrical */
     _Py_DEC_REFTOTAL;
     _Py_ForgetReference(v);
-    *pv = (PyObject *)
-        PyObject_REALLOC((char *)v, PyStringObject_SIZE + newsize);
-    if (*pv == NULL) {
-        PyObject_Del(v);
+    
+    //JyNI: We assume that no further use of the JyObject-fields has occurred, if
+    //crazy stuff like this method is performed.
+    //*pv = (PyObject *) PyObject_REALLOC((char *) AS_JY_NO_GC(v), PyStringObject_SIZE + newsize + sizeof(JyObject));
+    JyObject* jy = (JyObject*) PyObject_RawRealloc((char *) AS_JY_NO_GC(v), PyStringObject_SIZE + newsize + sizeof(JyObject));
+    if (jy == NULL) {
+        PyObject_RawFree(jy);
         PyErr_NoMemory();
         return -1;
     }
+    *pv = FROM_JY_NO_GC(jy);
+
     _Py_NewReference(*pv);
     sv = (PyStringObject *) *pv;
     Py_SIZE(sv) = newsize;
@@ -4759,6 +4781,19 @@ PyString_InternInPlace(PyObject **p)
     if (PyDict_SetItem(interned, (PyObject *)s, (PyObject *)s) < 0) {
         PyErr_Clear();
         return;
+    } else
+    {
+        /*JyNI-Note:
+         * Maybe it's good to reflect intern-behavior to java-side.
+         * We still don't want to init the python-string here,
+         * since it might be never needed.
+         * As a compromise in overhead, we put a JyNI-attribute instead.
+         * It tells the init-sync function of string to intern the
+         * created jstring.
+         * (attribute needs no value - it is interpreted as true, if present;
+         * thus it also doesen't need the JY_ATTR_OWNS_VALUE-flag)
+         */
+        JyNI_AddOrSetJyAttribute(AS_JY_NO_GC(s), JyAttributeStringInterned, NULL);
     }
     /* The two references in interned are not counted by refcnt.
        The string deallocator will take care of this */
@@ -4791,11 +4826,15 @@ void
 PyString_Fini(void)
 {
     int i;
-    for (i = 0; i < UCHAR_MAX + 1; i++)
+    for (i = 0; i < UCHAR_MAX + 1; i++) {
+        JyNI_CleanUp_JyObject(AS_JY_NO_GC(characters[i]));
         Py_CLEAR(characters[i]);
+    }
+    JyNI_CleanUp_JyObject(AS_JY_NO_GC(nullstring));
     Py_CLEAR(nullstring);
 }
 
+//>>
 void _Py_ReleaseInternedStrings(void)
 {
     PyObject *keys;
@@ -4845,3 +4884,4 @@ void _Py_ReleaseInternedStrings(void)
     PyDict_Clear(interned);
     Py_CLEAR(interned);
 }
+//<<

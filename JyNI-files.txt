@@ -41,9 +41,11 @@ Python/pystate.c
 // Python/pythonrun.c
 // Objects/setobject.c
 Python/sigcheck.c
+Python/strtod.c
 // Objects/sliceobject.c
-// Objects/stringobject.c
+Objects/stringobject.c
 Python/structmember.c
+Python/formatter_string.c
 // Python/sysmodule.c
 // thread_JyNI.c                 (won't support soon)
 // Python/traceback.c
