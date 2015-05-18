@@ -51,6 +51,6 @@ Python/formatter_string.c
 // Python/traceback.c
 Objects/tupleobject.c
 // Objects/typeobject.c
-// Objects/unicodeobject.c
+Objects/unicodeobject.c
 Parser/intrcheck.c > intrcheck.c
 

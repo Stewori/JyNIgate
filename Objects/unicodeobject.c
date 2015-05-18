@@ -42,8 +42,8 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
 
-#include "unicodeobject.h"
-#include "ucnhash.h"
+//#include "unicodeobject_JyNI.h"
+#include "ucnhash_JyNI.h"
 
 #ifdef MS_WINDOWS
 #include <windows.h>
@@ -380,7 +380,7 @@ PyUnicodeObject *_PyUnicode_New(Py_ssize_t length)
     /* XXX UNREF/NEWREF interface should be more symmetrical */
     _Py_DEC_REFTOTAL;
     _Py_ForgetReference((PyObject *)unicode);
-    PyObject_Del(unicode);
+    PyObject_Free(unicode);//PyObject_Del(unicode);
     return NULL;
 }
 
@@ -1205,12 +1205,15 @@ PyObject *PyUnicode_FromEncodedObject(register PyObject *obj,
         s = PyString_AS_STRING(obj);
         len = PyString_GET_SIZE(obj);
     }
+//JyNI: exclude this as long as PyByteArray (and thus PyByteArray_Check) is not supported yet
+//>>
     else if (PyByteArray_Check(obj)) {
         /* Python 2.x specific */
         PyErr_Format(PyExc_TypeError,
                      "decoding bytearray is not supported");
         return NULL;
     }
+//<<
     else if (PyObject_AsCharBuffer(obj, &s, &len)) {
         /* Overwrite the error message with something more useful in
            case of a TypeError. */
@@ -4325,6 +4328,7 @@ encoding_map_dealloc(PyObject* o)
     PyObject_FREE(o);
 }
 
+//JyNI-todo: Check how to deal with this type. Is there a Jython equivalent?
 static PyTypeObject EncodingMapType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "EncodingMap",          /*tp_name*/
@@ -6306,15 +6310,21 @@ PyObject *PyUnicode_RichCompare(PyObject *left,
     if (!PyErr_ExceptionMatches(PyExc_UnicodeDecodeError))
         return NULL;
     PyErr_Clear();
-    if (PyErr_Warn(PyExc_UnicodeWarning,
-                   (op == Py_EQ) ?
-                   "Unicode equal comparison "
-                   "failed to convert both arguments to Unicode - "
-                   "interpreting them as being unequal" :
-                   "Unicode unequal comparison "
-                   "failed to convert both arguments to Unicode - "
-                   "interpreting them as being unequal"
-            ) < 0)
+    const char *text = (op == Py_EQ) ?
+       "Unicode equal comparison "
+       "failed to convert both arguments to Unicode - "
+       "interpreting them as being unequal" :
+       "Unicode unequal comparison "
+       "failed to convert both arguments to Unicode - "
+       "interpreting them as being unequal";
+    env(NULL);
+    (*env)->CallStaticVoidMethod(env, pyPyClass, pyPyRaiseUnicodeWarning, (*env)->NewStringUTF(env, text));
+    if ((*env)->ExceptionCheck(env))
+    {
+        (*env)->ExceptionClear(env);
+        return NULL;
+    }
+    if (PyErr_Warn(PyExc_UnicodeWarning, text) < 0)
         return NULL;
     result = (op == Py_NE);
     return PyBool_FromLong(result);
@@ -8851,7 +8861,7 @@ unicode_subtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     pnew->str = (Py_UNICODE*) PyObject_MALLOC(sizeof(Py_UNICODE) * (n+1));
     if (pnew->str == NULL) {
         _Py_ForgetReference((PyObject *)pnew);
-        PyObject_Del(pnew);
+        PyObject_Free(pnew);//PyObject_Del(pnew);
         Py_DECREF(tmp);
         return PyErr_NoMemory();
     }
@@ -8872,46 +8882,46 @@ errors can be 'strict', 'replace' or 'ignore' and defaults to 'strict'.");
 
 PyTypeObject PyUnicode_Type = {
     PyVarObject_HEAD_INIT(&PyType_Type, 0)
-    "unicode",              /* tp_name */
-    sizeof(PyUnicodeObject),        /* tp_size */
-    0,                  /* tp_itemsize */
+    "unicode",                                         /* tp_name */
+    sizeof(PyUnicodeObject),                           /* tp_size */
+    0,                                                 /* tp_itemsize */
     /* Slots */
-    (destructor)unicode_dealloc,    /* tp_dealloc */
-    0,                  /* tp_print */
-    0,                  /* tp_getattr */
-    0,                  /* tp_setattr */
-    0,                  /* tp_compare */
-    unicode_repr,           /* tp_repr */
-    &unicode_as_number,         /* tp_as_number */
-    &unicode_as_sequence,       /* tp_as_sequence */
-    &unicode_as_mapping,        /* tp_as_mapping */
-    (hashfunc) unicode_hash,        /* tp_hash*/
-    0,                  /* tp_call*/
-    (reprfunc) unicode_str,     /* tp_str */
-    PyObject_GenericGetAttr,        /* tp_getattro */
-    0,                  /* tp_setattro */
-    &unicode_as_buffer,         /* tp_as_buffer */
+    (destructor)unicode_dealloc,                       /* tp_dealloc */
+    0,                                                 /* tp_print */
+    0,                                                 /* tp_getattr */
+    0,                                                 /* tp_setattr */
+    0,                                                 /* tp_compare */
+    unicode_repr,                                      /* tp_repr */
+    &unicode_as_number,                                /* tp_as_number */
+    &unicode_as_sequence,                              /* tp_as_sequence */
+    &unicode_as_mapping,                               /* tp_as_mapping */
+    (hashfunc) unicode_hash,                           /* tp_hash*/
+    0,                                                 /* tp_call*/
+    (reprfunc) unicode_str,                            /* tp_str */
+    PyObject_GenericGetAttr,                           /* tp_getattro */
+    0,                                                 /* tp_setattro */
+    &unicode_as_buffer,                                /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_CHECKTYPES |
-    Py_TPFLAGS_BASETYPE | Py_TPFLAGS_UNICODE_SUBCLASS,  /* tp_flags */
-    unicode_doc,            /* tp_doc */
-    0,                  /* tp_traverse */
-    0,                  /* tp_clear */
-    PyUnicode_RichCompare,      /* tp_richcompare */
-    0,                  /* tp_weaklistoffset */
-    0,                  /* tp_iter */
-    0,                  /* tp_iternext */
-    unicode_methods,            /* tp_methods */
-    0,                  /* tp_members */
-    0,                  /* tp_getset */
-    &PyBaseString_Type,         /* tp_base */
-    0,                  /* tp_dict */
-    0,                  /* tp_descr_get */
-    0,                  /* tp_descr_set */
-    0,                  /* tp_dictoffset */
-    0,                  /* tp_init */
-    0,                  /* tp_alloc */
-    unicode_new,            /* tp_new */
-    PyObject_Del,           /* tp_free */
+    Py_TPFLAGS_BASETYPE | Py_TPFLAGS_UNICODE_SUBCLASS, /* tp_flags */
+    unicode_doc,                                       /* tp_doc */
+    0,                                                 /* tp_traverse */
+    0,                                                 /* tp_clear */
+    PyUnicode_RichCompare,                             /* tp_richcompare */
+    0,                                                 /* tp_weaklistoffset */
+    0,                                                 /* tp_iter */
+    0,                                                 /* tp_iternext */
+    unicode_methods,                                   /* tp_methods */
+    0,                                                 /* tp_members */
+    0,                                                 /* tp_getset */
+    &PyBaseString_Type,                                /* tp_base */
+    0,                                                 /* tp_dict */
+    0,                                                 /* tp_descr_get */
+    0,                                                 /* tp_descr_set */
+    0,                                                 /* tp_dictoffset */
+    0,                                                 /* tp_init */
+    0,                                                 /* tp_alloc */
+    unicode_new,                                       /* tp_new */
+    PyObject_Free,//PyObject_Del,                      /* tp_free */
 };
 
 /* Initialize the Unicode implementation */
@@ -8968,7 +8978,7 @@ PyUnicode_ClearFreeList(void)
         if (v->str)
             PyObject_DEL(v->str);
         Py_XDECREF(v->defenc);
-        PyObject_Del(v);
+        PyObject_Free(v);//PyObject_Del(v);
         numfree--;
     }
     free_list = NULL;
