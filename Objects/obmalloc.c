@@ -1,4 +1,5 @@
 #include "Python.h"
+#include "JyRefMonitor.h"
 
 #if defined(__has_feature)  /* Clang */
  #if __has_feature(address_sanitizer)  /* is ASAN enabled? */
@@ -787,22 +788,6 @@ int Py_ADDRESS_IN_RANGE(void *P, poolp pool) Py_NO_INLINE;
 
 #undef PyObject_Malloc
 
-/* JyNI-note: Though this method might not only be used for PyObject-
- * allocation, we always prepend a JyObject. We regard this slight
- * overhead in non-PyObject cases as preferable over potential
- * segmentation-fault if a PyObject is created via PyObject_NEW or
- * PyObject_NEW_VAR.
- */
-void *
-PyObject_Malloc(size_t nbytes)
-{
-	JyObject* er = PyObject_RawMalloc(sizeof(JyObject) + nbytes);
-	er->attr = NULL;
-	er->flags = 0;
-	er->jy = NULL;
-	return FROM_JY_NO_GC(er);
-}
-
 void *
 PyObject_RawMalloc(size_t nbytes)
 {
@@ -1007,15 +992,6 @@ redirect:
 
 #undef PyObject_Free
 ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
-void
-PyObject_Free(void *p)
-{
-	//this is identical with former JyNI_Del.
-	JyObject* jy = AS_JY_NO_GC(p);
-	JyNI_CleanUp_JyObject(jy);
-	PyObject_RawFree(jy);
-}
-
 void
 PyObject_RawFree(void *p)
 {
@@ -1248,13 +1224,6 @@ redirect:
 #undef PyObject_Realloc
 ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
 void *
-PyObject_Realloc(void *p, size_t nbytes)
-{
-	//header should be approprietly copied by underlying call to RawRealloc.
-	return FROM_JY_NO_GC(PyObject_RawRealloc(AS_JY_NO_GC(p), nbytes+sizeof(JyObject)));
-}
-
-void *
 PyObject_RawRealloc(void *p, size_t nbytes)
 {
     void *bp;
@@ -1340,33 +1309,10 @@ PyObject_RawRealloc(void *p, size_t nbytes)
 /* pymalloc not enabled:  Redirect the entry points to malloc.  These will
  * only be used by extensions that are compiled with pymalloc enabled. */
 
-/* JyNI-note: Though this method might not only be used for PyObject-
- * allocation, we always prepend a JyObject. We regard this slight
- * overhead in non-PyObject cases as preferable over potential
- * segmentation-fault if a PyObject is created via PyObject_NEW or
- * PyObject_NEW_VAR.
- */
-void *
-PyObject_Malloc(size_t n)
-{
-	JyObject* er = PyObject_RawMalloc(sizeof(JyObject) + n);
-	er->attr = NULL;
-	er->flags = 0;
-	er->jy = NULL;
-	return FROM_JY_NO_GC(er);
-}
-
 void *
 PyObject_RawMalloc(size_t n)
 {
     return PyMem_MALLOC(n);
-}
-
-void *
-PyObject_Realloc(void *p, size_t n)
-{
-	//header should be approprietly copied by underlying call to RawRealloc.
-	return FROM_JY_NO_GC(PyObject_RawRealloc(AS_JY_NO_GC(p), n+sizeof(JyObject)));
 }
 
 void *
@@ -1376,20 +1322,56 @@ PyObject_RawRealloc(void *p, size_t n)
 }
 
 void
-PyObject_Free(void *p)
-{
-	//this is identical with former JyNI_Del.
-	JyObject* jy = AS_JY_NO_GC(p);
-	JyNI_CleanUp_JyObject(jy);
-	PyObject_RawFree(jy);
-}
-
-void
 PyObject_RawFree(void *p)
 {
     PyMem_FREE(p);
 }
 #endif /* WITH_PYMALLOC */
+
+/* JyNI-note: Though this method might not only be used for PyObject-
+ * allocation, we always prepend a JyObject. We regard this slight
+ * overhead in non-PyObject cases as preferable over potential
+ * segmentation-fault if a PyObject is created via PyObject_NEW or
+ * PyObject_NEW_VAR.
+ */
+void *
+PyObject_Malloc(size_t n)
+{
+    JyObject* er = PyObject_RawMalloc(sizeof(JyObject) + n);
+    er->attr = NULL;
+    er->flags = 0;
+    er->jy = NULL;
+    if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_ALLOC, er, n, NULL,
+            "obmalloc.PyObject_Malloc");
+    return FROM_JY_NO_GC(er);
+}
+
+#ifdef WITH_PYMALLOC
+ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
+#endif
+void *
+PyObject_Realloc(void *p, size_t n)
+{
+    //header should be appropriately copied by underlying call to RawRealloc.
+    JyObject* er = PyObject_RawRealloc(AS_JY_NO_GC(p), n+sizeof(JyObject));
+    if (Jy_memDebug) JyRefMonitor_addAction2(JY_NATIVE_REALLOC, AS_JY_NO_GC(p), er, n, NULL,
+            "obmalloc.PyObject_Realloc");
+    return FROM_JY_NO_GC(er);
+}
+
+#ifdef WITH_PYMALLOC
+ATTRIBUTE_NO_ADDRESS_SAFETY_ANALYSIS
+#endif
+void
+PyObject_Free(void *p)
+{
+    //JyNI-note: this is identical with former JyNI_Del.
+    JyObject* jy = AS_JY_NO_GC(p);
+    if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_FREE, jy, -1, NULL,
+            "obmalloc.PyObject_Free");
+    JyNI_CleanUp_JyObject(jy);
+    PyObject_RawFree(jy);
+}
 
 #ifdef PYMALLOC_DEBUG
 /*==========================================================================*/
