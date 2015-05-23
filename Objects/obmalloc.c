@@ -1,5 +1,4 @@
 #include "Python.h"
-#include "JyRefMonitor.h"
 
 #if defined(__has_feature)  /* Clang */
  #if __has_feature(address_sanitizer)  /* is ASAN enabled? */
@@ -1342,7 +1341,7 @@ PyObject_Malloc(size_t n)
     er->flags = 0;
     er->jy = NULL;
     if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_ALLOC, er, n, NULL,
-            "obmalloc.PyObject_Malloc");
+            __FUNCTION__);
     return FROM_JY_NO_GC(er);
 }
 
@@ -1355,7 +1354,7 @@ PyObject_Realloc(void *p, size_t n)
     //header should be appropriately copied by underlying call to RawRealloc.
     JyObject* er = PyObject_RawRealloc(AS_JY_NO_GC(p), n+sizeof(JyObject));
     if (Jy_memDebug) JyRefMonitor_addAction2(JY_NATIVE_REALLOC, AS_JY_NO_GC(p), er, n, NULL,
-            "obmalloc.PyObject_Realloc");
+            __FUNCTION__);
     return FROM_JY_NO_GC(er);
 }
 
@@ -1368,7 +1367,7 @@ PyObject_Free(void *p)
     //JyNI-note: this is identical with former JyNI_Del.
     JyObject* jy = AS_JY_NO_GC(p);
     if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_FREE, jy, -1, NULL,
-            "obmalloc.PyObject_Free");
+            __FUNCTION__);
     JyNI_CleanUp_JyObject(jy);
     PyObject_RawFree(jy);
 }

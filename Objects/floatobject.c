@@ -5,7 +5,6 @@
    for any kind of float exception without losing portability. */
 
 #include "Python.h"
-#include "JyRefMonitor.h"
 #include "structseq_JyNI.h"
 
 #include <ctype.h>
@@ -157,7 +156,7 @@ PyFloat_FromDouble(double fval)
     PyObject_INIT(op, &PyFloat_Type);
     op->ob_fval = fval;
     if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_ALLOC | JY_INLINE_MASK,
-            AS_JY_NO_GC(op), -1, Py_TYPE(op)->tp_name, "PyFloat_FromDouble");
+            AS_JY_NO_GC(op), -1, Py_TYPE(op)->tp_name, __FUNCTION__);
     return (PyObject *) op;
 }
 
@@ -247,7 +246,7 @@ static void
 float_dealloc(PyFloatObject *op)
 {
     if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_FINALIZE,
-            AS_JY_NO_GC(op), -1, Py_TYPE(op)->tp_name, "float_dealloc");
+            AS_JY_NO_GC(op), -1, Py_TYPE(op)->tp_name, __FUNCTION__);
     if (PyFloat_CheckExact(op)) {
         JyObject* jy = AS_JY_NO_GC(op);
         JyNI_CleanUp_JyObject(jy);

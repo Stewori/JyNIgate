@@ -3,7 +3,6 @@
 /* XXX The functional organization of this file is terrible */
 
 #include "Python.h"
-#include "JyRefMonitor.h"
 #include "longintrepr_JyNI.h"
 #include "structseq_JyNI.h"
 
@@ -2352,7 +2351,7 @@ static void
 long_dealloc(PyObject *v)
 {
     if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_FINALIZE,
-            AS_JY_NO_GC(v), -1, Py_TYPE(v)->tp_name, "long_dealloc");
+            AS_JY_NO_GC(v), -1, Py_TYPE(v)->tp_name, __FUNCTION__);
     Py_TYPE(v)->tp_free(v);
 }
 

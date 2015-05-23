@@ -2,7 +2,6 @@
 /* Integer object implementation */
 
 #include "Python.h"
-#include "JyRefMonitor.h"
 #include <ctype.h>
 #include <float.h>
 
@@ -116,7 +115,7 @@ PyInt_FromLong(long ival)
     PyObject_INIT(v, &PyInt_Type);
     v->ob_ival = ival;
     if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_ALLOC | JY_INLINE_MASK,
-            AS_JY_NO_GC(v), -1, Py_TYPE(v)->tp_name, "PyInt_FromLong");
+            AS_JY_NO_GC(v), -1, Py_TYPE(v)->tp_name, __FUNCTION__);
     return (PyObject *) v;
 }
 
@@ -140,12 +139,14 @@ static void
 int_dealloc(PyIntObject *v)
 {
     if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_FINALIZE,
-            AS_JY_NO_GC(v), -1, Py_TYPE(v)->tp_name, "int_dealloc");
+            AS_JY_NO_GC(v), -1, Py_TYPE(v)->tp_name, __FUNCTION__);
     if (PyInt_CheckExact(v)) {
         JyObject* jy = AS_JY_NO_GC(v);
         JyNI_CleanUp_JyObject(jy);
         Py_TYPE(v) = (struct _typeobject *)free_list;
         free_list = v;
+        if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_FREE | JY_INLINE_MASK,
+                AS_JY_NO_GC(v), -1, Py_TYPE(v)->tp_name, __FUNCTION__);
     }
     else
         Py_TYPE(v)->tp_free((PyObject *)v);
@@ -155,7 +156,7 @@ static void
 int_free(PyIntObject *v)
 {
     if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_FREE,
-            AS_JY_NO_GC(v), -1, Py_TYPE(v)->tp_name, "int_free");
+            AS_JY_NO_GC(v), -1, Py_TYPE(v)->tp_name, __FUNCTION__);
     JyObject* jy = AS_JY_NO_GC(v);
     JyNI_CleanUp_JyObject(jy);
     Py_TYPE(v) = (struct _typeobject *)free_list;
@@ -1489,7 +1490,7 @@ _PyInt_Init(void)
         jy = AS_JY_NO_GC(v);
         Jy_InitImmutable(jy);
         if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_ALLOC | JY_INLINE_MASK,
-                AS_JY_NO_GC(v), -1, Py_TYPE(v)->tp_name, "_PyInt_Init");
+                AS_JY_NO_GC(v), -1, Py_TYPE(v)->tp_name, __FUNCTION__);
 
     }
 #endif
