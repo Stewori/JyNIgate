@@ -20,8 +20,7 @@ jy->jy = NULL; \
 jy->attr = NULL; \
 jy->flags = JySYNC_ON_INIT_FLAGS; \
 op = (PyStringObject *) FROM_JY_NO_GC(jy); \
-if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_ALLOC | JY_INLINE_MASK, \
-        jy, basicsize, PyString_Type.tp_name, __FUNCTION__)
+JyNIDebug(JY_NATIVE_ALLOC | JY_INLINE_MASK, jy, basicsize, PyString_Type.tp_name)
 
 static PyStringObject *characters[UCHAR_MAX + 1];
 /*static*/ PyStringObject *nullstring; //not static in JyNI to use it with extern in JyNI.h
@@ -589,8 +588,7 @@ PyObject *PyString_AsEncodedString(PyObject *str,
 static void
 string_dealloc(PyObject *op)
 {
-    if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_FINALIZE,
-                AS_JY_NO_GC(op), -1, Py_TYPE(op)->tp_name, __FUNCTION__);
+    JyNIDebugOp(JY_NATIVE_FINALIZE, op, -1);
     switch (PyString_CHECK_INTERNED(op)) {
         case SSTATE_NOT_INTERNED:
             break;
@@ -3933,11 +3931,11 @@ _PyString_Resize(PyObject **pv, Py_ssize_t newsize)
     //crazy stuff like this method is performed.
     //*pv = (PyObject *) PyObject_REALLOC((char *) AS_JY_NO_GC(v), PyStringObject_SIZE + newsize + sizeof(JyObject));
     JyObject* jy;
-    if (Jy_memDebug)
+    if (IsJyNIDebug(JY_NATIVE_REALLOC | JY_INLINE_MASK))
     {
         JyObject* oldRef = AS_JY_NO_GC(v);
         jy = (JyObject*) PyObject_RawRealloc((char *) AS_JY_NO_GC(v), PyStringObject_SIZE + newsize + sizeof(JyObject));
-        JyRefMonitor_addAction2(JY_NATIVE_REALLOC | JY_INLINE_MASK, oldRef, jy, PyStringObject_SIZE + newsize, PyString_Type.tp_name, __FUNCTION__);
+        JyNIDebug2(JY_NATIVE_REALLOC | JY_INLINE_MASK, oldRef, jy, PyStringObject_SIZE + newsize, PyString_Type.tp_name);
     } else
         jy = (JyObject*) PyObject_RawRealloc((char *) AS_JY_NO_GC(v), PyStringObject_SIZE + newsize + sizeof(JyObject));
     if (jy == NULL) {

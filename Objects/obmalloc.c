@@ -1340,8 +1340,7 @@ PyObject_Malloc(size_t n)
     er->attr = NULL;
     er->flags = 0;
     er->jy = NULL;
-    if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_ALLOC, er, n, NULL,
-            __FUNCTION__);
+    JyNIDebug(JY_NATIVE_ALLOC, er, n, NULL);
     return FROM_JY_NO_GC(er);
 }
 
@@ -1353,8 +1352,7 @@ PyObject_Realloc(void *p, size_t n)
 {
     //header should be appropriately copied by underlying call to RawRealloc.
     JyObject* er = PyObject_RawRealloc(AS_JY_NO_GC(p), n+sizeof(JyObject));
-    if (Jy_memDebug) JyRefMonitor_addAction2(JY_NATIVE_REALLOC, AS_JY_NO_GC(p), er, n, NULL,
-            __FUNCTION__);
+    JyNIDebug2(JY_NATIVE_REALLOC, AS_JY_NO_GC(p), er, n, NULL);
     return FROM_JY_NO_GC(er);
 }
 
@@ -1366,8 +1364,7 @@ PyObject_Free(void *p)
 {
     //JyNI-note: this is identical with former JyNI_Del.
     JyObject* jy = AS_JY_NO_GC(p);
-    if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_FREE, jy, -1, NULL,
-            __FUNCTION__);
+    JyNIDebug(JY_NATIVE_FREE, jy, -1, NULL);
     JyNI_CleanUp_JyObject(jy);
     PyObject_RawFree(jy);
 }

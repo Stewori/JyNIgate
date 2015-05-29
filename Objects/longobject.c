@@ -2350,8 +2350,7 @@ PyLong_AsDouble(PyObject *v)
 static void
 long_dealloc(PyObject *v)
 {
-    if (Jy_memDebug) JyRefMonitor_addAction(JY_NATIVE_FINALIZE,
-            AS_JY_NO_GC(v), -1, Py_TYPE(v)->tp_name, __FUNCTION__);
+    JyNIDebugOp(JY_NATIVE_FINALIZE, v, -1);
     Py_TYPE(v)->tp_free(v);
 }
 
