@@ -94,7 +94,7 @@ PyInt_FromLong(long ival)
     register PyIntObject *v;
 #if NSMALLNEGINTS + NSMALLPOSINTS > 0
     if (-NSMALLNEGINTS <= ival && ival < NSMALLPOSINTS) {
-        v = small_ints[ival + NSMALLNEGINTS];
+        v = FROM_JY_NO_GC(small_ints[ival + NSMALLNEGINTS]);
         Py_INCREF(v);
 #ifdef COUNT_ALLOCS
         if (ival >= 0)
@@ -1482,8 +1482,8 @@ _PyInt_Init(void)
         free_list = (PyIntObject *)Py_TYPE(v);
         PyObject_INIT(v, &PyInt_Type);
         v->ob_ival = ival;
-        small_ints[ival + NSMALLNEGINTS] = v;
         jy = AS_JY_NO_GC(v);
+        small_ints[ival + NSMALLNEGINTS] = jy;
         Jy_InitImmutable(jy);
         JyNIDebugOp(JY_NATIVE_ALLOC | JY_INLINE_MASK, v, -1);
     }
@@ -1532,7 +1532,7 @@ PyInt_ClearFreeList(void)
                                     NSMALLNEGINTS] == NULL) {
                     Py_INCREF(FROM_JY_NO_GC(p));
                     small_ints[p->pyInt.ob_ival +
-                                NSMALLNEGINTS] = FROM_JY_NO_GC(p);
+                                NSMALLNEGINTS] = p;
                 }
 #endif
             }

@@ -4836,11 +4836,15 @@ PyString_Fini(void)
 {
     int i;
     for (i = 0; i < UCHAR_MAX + 1; i++) {
-        JyNI_CleanUp_JyObject(AS_JY_NO_GC(characters[i]));
-        Py_CLEAR(characters[i]);
+        if (characters[i]) {
+            JyNI_CleanUp_JyObject(AS_JY_NO_GC(characters[i]));
+            Py_CLEAR(characters[i]);
+        }
     }
-    JyNI_CleanUp_JyObject(AS_JY_NO_GC(nullstring));
-    Py_CLEAR(nullstring);
+    if (nullstring) {
+        JyNI_CleanUp_JyObject(AS_JY_NO_GC(nullstring));
+        Py_CLEAR(nullstring);
+    }
 }
 
 //>>

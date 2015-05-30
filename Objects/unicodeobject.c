@@ -9001,10 +9001,17 @@ _PyUnicode_Fini(void)
 {
     int i;
 
-    Py_CLEAR(unicode_empty);
+    if (unicode_empty) {
+        JyNI_CleanUp_JyObject(AS_JY_NO_GC(unicode_empty));
+        Py_CLEAR(unicode_empty);
+    }
 
-    for (i = 0; i < 256; i++)
-        Py_CLEAR(unicode_latin1[i]);
+    for (i = 0; i < 256; i++) {
+        if (unicode_latin1[i]) {
+            JyNI_CleanUp_JyObject(AS_JY_NO_GC(unicode_latin1[i]));
+            Py_CLEAR(unicode_latin1[i]);
+        }
+    }
 
     (void)PyUnicode_ClearFreeList();
 }
