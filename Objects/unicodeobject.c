@@ -1272,7 +1272,7 @@ PyObject *PyUnicode_Decode(const char *s,
     buffer = PyBuffer_FromMemory((void *)s, size);
     if (buffer == NULL)
         goto onError;
-    unicode = PyCodec_Decode(buffer, encoding, errors);
+    unicode = _PyCodec_DecodeText(buffer, encoding, errors);
     if (unicode == NULL)
         goto onError;
     if (!PyUnicode_Check(unicode)) {
@@ -1305,7 +1305,7 @@ PyObject *PyUnicode_AsDecodedObject(PyObject *unicode,
         encoding = PyUnicode_GetDefaultEncoding();
 
     /* Decode via the codec registry */
-    v = PyCodec_Decode(unicode, encoding, errors);
+    v = _PyCodec_DecodeText(unicode, encoding, errors);
     if (v == NULL)
         goto onError;
     return v;
@@ -1344,7 +1344,7 @@ PyObject *PyUnicode_AsEncodedObject(PyObject *unicode,
         encoding = PyUnicode_GetDefaultEncoding();
 
     /* Encode via the codec registry */
-    v = PyCodec_Encode(unicode, encoding, errors);
+    v = _PyCodec_EncodeText(unicode, encoding, errors);
     if (v == NULL)
         goto onError;
     return v;
@@ -1382,7 +1382,7 @@ PyObject *PyUnicode_AsEncodedString(PyObject *unicode,
     }
 
     /* Encode via the codec registry */
-    v = PyCodec_Encode(unicode, encoding, errors);
+    v = _PyCodec_EncodeText(unicode, encoding, errors);
     if (v == NULL)
         goto onError;
     if (!PyString_Check(v)) {

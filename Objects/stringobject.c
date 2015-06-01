@@ -461,7 +461,7 @@ PyObject *PyString_AsDecodedObject(PyObject *str,
     }
 
     /* Decode via the codec registry */
-    v = PyCodec_Decode(str, encoding, errors);
+    v = _PyCodec_DecodeText(str, encoding, errors);
     if (v == NULL)
         goto onError;
 
@@ -541,7 +541,7 @@ PyObject *PyString_AsEncodedObject(PyObject *str,
     }
 
     /* Encode via the codec registry */
-    v = PyCodec_Encode(str, encoding, errors);
+    v = _PyCodec_EncodeText(str, encoding, errors);
     if (v == NULL)
         goto onError;
 
