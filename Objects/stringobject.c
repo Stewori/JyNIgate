@@ -22,7 +22,7 @@ jy->flags = JySYNC_ON_INIT_FLAGS; \
 op = (PyStringObject *) FROM_JY_NO_GC(jy); \
 JyNIDebug(JY_NATIVE_ALLOC | JY_INLINE_MASK, jy, basicsize, PyString_Type.tp_name)
 
-static PyStringObject *characters[UCHAR_MAX + 1];
+PyStringObject *characters[UCHAR_MAX + 1];
 /*static*/ PyStringObject *nullstring; //not static in JyNI to use it with extern in JyNI.h
 
 /* This dictionary holds all interned strings.  Note that references to

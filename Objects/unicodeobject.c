@@ -98,7 +98,7 @@ static PyUnicodeObject *free_list = NULL;
 static int numfree = 0;
 
 /* The empty Unicode object is shared to improve performance. */
-static PyUnicodeObject *unicode_empty = NULL;
+PyUnicodeObject *unicode_empty = NULL;
 
 #define _Py_RETURN_UNICODE_EMPTY()                      \
     do {                                                \
@@ -114,7 +114,7 @@ static PyUnicodeObject *unicode_empty = NULL;
 
 /* Single character Unicode strings in the Latin-1 range are being
    shared as well. */
-static PyUnicodeObject *unicode_latin1[256] = {NULL};
+PyUnicodeObject *unicode_latin1[256] = {NULL};
 
 /* Default encoding to use and assume when NULL is passed as encoding
    parameter; it is initialized by _PyUnicode_Init().

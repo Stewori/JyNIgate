@@ -81,7 +81,7 @@ fill_free_list(void)
    The integers that are saved are those in the range
    -NSMALLNEGINTS (inclusive) to NSMALLPOSINTS (not inclusive).
 */
-static JyIntObject *small_ints[NSMALLNEGINTS + NSMALLPOSINTS];
+JyIntObject *small_ints[NSMALLNEGINTS + NSMALLPOSINTS];
 #endif
 #ifdef COUNT_ALLOCS
 Py_ssize_t quick_int_allocs;
