@@ -28,7 +28,7 @@ Python/formatter_unicode.c
 Objects/intobject.c
 // Objects/listobject.c
 Objects/longobject.c
-// Objects/methodobject.c
+Objects/methodobject.c
 // Python/modsupport.c
 // Objects/moduleobject.c
 Python/mysnprintf.c

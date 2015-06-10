@@ -6,7 +6,7 @@
 static void
 descr_dealloc(PyDescrObject *descr)
 {
-    _PyObject_GC_UNTRACK(descr);
+    _JyNI_GC_UNTRACK(descr);
     Py_XDECREF(descr->d_type);
     Py_XDECREF(descr->d_name);
     PyObject_GC_Del(descr);
@@ -821,7 +821,7 @@ static PyMethodDef proxy_methods[] = {
 static void
 proxy_dealloc(proxyobject *pp)
 {
-    _PyObject_GC_UNTRACK(pp);
+    _JyNI_GC_UNTRACK(pp);
     Py_DECREF(pp->dict);
     PyObject_GC_Del(pp);
 }
@@ -919,7 +919,7 @@ PyDictProxy_New(PyObject *dict)
     if (pp != NULL) {
         Py_INCREF(dict);
         pp->dict = dict;
-        _PyObject_GC_TRACK(pp);
+        _JyNI_GC_TRACK(pp);
     }
     return (PyObject *)pp;
 }
@@ -1108,7 +1108,7 @@ PyWrapper_New(PyObject *d, PyObject *self)
         wp->descr = descr;
         Py_INCREF(self);
         wp->self = self;
-        _PyObject_GC_TRACK(wp);
+        _JyNI_GC_TRACK(wp);
     }
     return (PyObject *)wp;
 }
@@ -1210,7 +1210,7 @@ property_dealloc(PyObject *self)
 {
     propertyobject *gs = (propertyobject *)self;
 
-    _PyObject_GC_UNTRACK(self);
+    _JyNI_GC_UNTRACK(self);
     Py_XDECREF(gs->prop_get);
     Py_XDECREF(gs->prop_set);
     Py_XDECREF(gs->prop_del);

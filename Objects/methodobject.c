@@ -33,7 +33,7 @@ PyCFunction_NewEx(PyMethodDef *ml, PyObject *self, PyObject *module)
     op->m_self = self;
     Py_XINCREF(module);
     op->m_module = module;
-    _PyObject_GC_TRACK(op);
+    _JyNI_GC_TRACK(op);
     return (PyObject *)op;
 }
 
@@ -130,7 +130,7 @@ PyCFunction_Call(PyObject *func, PyObject *arg, PyObject *kw)
 static void
 meth_dealloc(PyCFunctionObject *m)
 {
-    _PyObject_GC_UNTRACK(m);
+    _JyNI_GC_UNTRACK(m);
     Py_XDECREF(m->m_self);
     Py_XDECREF(m->m_module);
     if (numfree < PyCFunction_MAXFREELIST) {
