@@ -56,7 +56,7 @@ def convertFile(filePath, destPath):
 		elif line == "//<<\n":
 			commentMode = False
 		else:
-			if line.find("../Objects/stringlib"):
+			if line.find("../Objects/stringlib") != -1:
 				line = line.replace("../Objects/stringlib", "stringlib")
 			line = spacesToTabs(line)
 			if (not JyNIIncluded or not structmemberIncluded) and line.startswith("#include"):
