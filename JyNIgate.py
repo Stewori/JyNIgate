@@ -60,10 +60,10 @@ def convertFile(filePath, destPath):
 				line = line.replace("../Objects/stringlib", "stringlib")
 			line = spacesToTabs(line)
 			if (not JyNIIncluded or not structmemberIncluded) and line.startswith("#include"):
-				if line.find("Python.h"):
+				if line.find("Python.h") != -1:
 					line = line.replace("Python.h", "JyNI.h")
 					JyNIIncluded = True
-				elif line.find("structmember.h"):
+				elif line.find("structmember.h") != -1:
 					line = line.replace("structmember.h", "structmember_JyNI.h")
 					structmemberIncluded = True
 			if commentMode:
@@ -85,7 +85,6 @@ def Cdest():
 if __name__ == '__main__':
 	initSrcList()
 	initIntro()
-	dest = "./test/"
 	dest = Cdest()
 	for line in srcList:
 		if len(line) > 0 and not line[:2] == "//":
