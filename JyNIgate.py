@@ -60,10 +60,12 @@ def convertFile(filePath, destPath):
 				line = line.replace("../Objects/stringlib", "stringlib")
 			line = spacesToTabs(line)
 			if (not JyNIIncluded or not structmemberIncluded) and line.startswith("#include"):
-				if line.find("Python.h") != -1:
+				pyPos = line.find("Python.h")
+				structPos = line.find("structmember.h")
+				if pyPos != -1 and (structPos == -1 or pyPos < structPos):
 					line = line.replace("Python.h", "JyNI.h")
 					JyNIIncluded = True
-				elif line.find("structmember.h") != -1:
+				elif structPos != -1 and (pyPos == -1 or structPos < pyPos):
 					line = line.replace("structmember.h", "structmember_JyNI.h")
 					structmemberIncluded = True
 			if commentMode:
