@@ -611,7 +611,7 @@ descr_new(PyTypeObject *descrtype, PyTypeObject *type, const char *name)
 {
     PyDescrObject *descr;
 
-    descr = (PyDescrObject *)PyType_GenericAlloc(descrtype, 0);
+    descr = (PyDescrObject *)JyNI_AllocNativeVar(descrtype, 0);
     if (descr != NULL) {
         Py_XINCREF(type);
         descr->d_type = type;
@@ -620,6 +620,7 @@ descr_new(PyTypeObject *descrtype, PyTypeObject *type, const char *name)
             Py_DECREF(descr);
             descr = NULL;
         }
+        JyNI_GC_Explore(descr);
     }
     return descr;
 }
