@@ -4779,6 +4779,10 @@ PyString_InternInPlace(PyObject **p)
         if (interned == NULL) {
             PyErr_Clear(); /* Don't leave an exception */
             return;
+        } else {
+            env();
+            jfieldID jyInterned = (*env)->GetStaticFieldID(env, JyNIClass, "nativeInternedStrings", "Lorg/python/core/PyObject;");
+            (*env)->SetStaticObjectField(env, JyNIClass, jyInterned, JyNI_JythonPyObject_FromPyObject(interned));
         }
     }
     t = PyDict_GetItem(interned, (PyObject *)s);
