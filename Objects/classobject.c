@@ -193,6 +193,7 @@ class_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void
 class_dealloc(PyClassObject *op)
 {
+    JyNIDebugOp(JY_NATIVE_FINALIZE, op, -1);
     _JyNI_GC_UNTRACK(op);
     if (op->cl_weakreflist != NULL)
         PyObject_ClearWeakRefs((PyObject *) op);
@@ -635,6 +636,7 @@ instance_new(PyTypeObject* type, PyObject* args, PyObject *kw)
 static void
 instance_dealloc(register PyInstanceObject *inst)
 {
+    JyNIDebugOp(JY_NATIVE_FINALIZE, inst, -1);
     PyObject *error_type, *error_value, *error_traceback;
     PyObject *del;
     static PyObject *delstr;
@@ -2268,6 +2270,7 @@ PyMethod_New(PyObject *func, PyObject *self, PyObject *klass)
     if (im != NULL) {
         free_list = (PyMethodObject *)(im->im_self);
         PyObject_INIT(im, &PyMethod_Type);
+        JyNIDebug(JY_NATIVE_ALLOC_GC | JY_INLINE_MASK, AS_JY_WITH_GC(im), -1, PyMethod_Type.tp_name);
         numfree--;
     }
     else {
@@ -2392,6 +2395,7 @@ instancemethod_new(PyTypeObject* type, PyObject* args, PyObject *kw)
 static void
 instancemethod_dealloc(register PyMethodObject *im)
 {
+    JyNIDebugOp(JY_NATIVE_FINALIZE, im, -1);
     _JyNI_GC_UNTRACK(im);
     if (im->im_weakreflist != NULL)
         PyObject_ClearWeakRefs((PyObject *)im);
@@ -2399,6 +2403,8 @@ instancemethod_dealloc(register PyMethodObject *im)
     Py_XDECREF(im->im_self);
     Py_XDECREF(im->im_class);
     if (numfree < PyMethod_MAXFREELIST) {
+        JyNIDebugOp(JY_NATIVE_FREE | JY_INLINE_MASK, im, -1);
+        JyNI_CleanUp_JyObject(AS_JY_WITH_GC(im));
         im->im_self = (PyObject *)free_list;
         free_list = im;
         numfree++;
