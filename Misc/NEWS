@@ -134,6 +134,9 @@ Library
 Build
 -----
 
+- Issue #24986: It is now possible to build Python on Windows without errors
+  when external libraries are not available.
+
 - Issue #24508: Backported the MSBuild project files from Python 3.5.  The
   backported files replace the old project files in PCbuild; the old files moved
   to PC/VS9.0 and remain supported.
@@ -179,6 +182,9 @@ Tests
 - Issue #24751: When running regrtest with the ``-w`` command line option,
   a test run is no longer marked as a failure if all tests succeed when
   re-run.
+
+- PCbuild\rt.bat now accepts an unlimited number of arguments to pass along
+  to regrtest.py.  Previously there was a limit of 9.
 
 
 What's New in Python 2.7.10?
