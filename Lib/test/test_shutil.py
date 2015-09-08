@@ -379,16 +379,16 @@ class TestShutil(unittest.TestCase):
         tmpdir2 = self.mkdtemp()
         # force shutil to create the directory
         os.rmdir(tmpdir2)
-        unittest.skipUnless(splitdrive(root_dir)[0] == splitdrive(tmpdir2)[0],
-                            "source and target should be on same drive")
+        # working with relative paths
+        work_dir = os.path.dirname(tmpdir2)
+        rel_base_name = os.path.join(os.path.basename(tmpdir2), 'archive')
+        base_name = os.path.join(work_dir, rel_base_name)
 
-        base_name = os.path.join(tmpdir2, 'archive')
-
-        # working with relative paths to avoid tar warnings
-        make_archive(splitdrive(base_name)[1], 'gztar', root_dir, '.')
+        with support.change_cwd(work_dir):
+            tarball = make_archive(rel_base_name, 'gztar', root_dir, '.')
 
         # check if the compressed tarball was created
-        tarball = base_name + '.tar.gz'
+        self.assertEqual(tarball, base_name + '.tar.gz')
         self.assertTrue(os.path.isfile(tarball))
         self.assertTrue(tarfile.is_tarfile(tarball))
         with tarfile.open(tarball, 'r:gz') as tf:
@@ -397,9 +397,9 @@ class TestShutil(unittest.TestCase):
                               './sub', './sub/file3', './sub2'])
 
         # trying an uncompressed one
-        base_name = os.path.join(tmpdir2, 'archive')
-        make_archive(splitdrive(base_name)[1], 'tar', root_dir, '.')
-        tarball = base_name + '.tar'
+        with support.change_cwd(work_dir):
+            tarball = make_archive(rel_base_name, 'tar', root_dir, '.')
+        self.assertEqual(tarball, base_name + '.tar')
         self.assertTrue(os.path.isfile(tarball))
         self.assertTrue(tarfile.is_tarfile(tarball))
         with tarfile.open(tarball, 'r') as tf:
@@ -434,10 +434,10 @@ class TestShutil(unittest.TestCase):
     def test_tarfile_vs_tar(self):
         root_dir, base_dir = self._create_files()
         base_name = os.path.join(self.mkdtemp(), 'archive')
-        make_archive(base_name, 'gztar', root_dir, base_dir)
+        tarball = make_archive(base_name, 'gztar', root_dir, base_dir)
 
         # check if the compressed tarball was created
-        tarball = base_name + '.tar.gz'
+        self.assertEqual(tarball, base_name + '.tar.gz')
         self.assertTrue(os.path.isfile(tarball))
 
         # now create another tarball using `tar`
@@ -451,13 +451,14 @@ class TestShutil(unittest.TestCase):
         self.assertEqual(self._tarinfo(tarball), self._tarinfo(tarball2))
 
         # trying an uncompressed one
-        make_archive(base_name, 'tar', root_dir, base_dir)
-        tarball = base_name + '.tar'
+        tarball = make_archive(base_name, 'tar', root_dir, base_dir)
+        self.assertEqual(tarball, base_name + '.tar')
         self.assertTrue(os.path.isfile(tarball))
 
         # now for a dry_run
-        make_archive(base_name, 'tar', root_dir, base_dir, dry_run=True)
-        tarball = base_name + '.tar'
+        tarball = make_archive(base_name, 'tar', root_dir, base_dir,
+                               dry_run=True)
+        self.assertEqual(tarball, base_name + '.tar')
         self.assertTrue(os.path.isfile(tarball))
 
     @unittest.skipUnless(zlib, "Requires zlib")
@@ -465,8 +466,17 @@ class TestShutil(unittest.TestCase):
     def test_make_zipfile(self):
         # creating something to zip
         root_dir, base_dir = self._create_files()
-        base_name = os.path.join(self.mkdtemp(), 'archive')
-        res = make_archive(base_name, 'zip', root_dir, 'dist')
+
+        tmpdir2 = self.mkdtemp()
+        # force shutil to create the directory
+        os.rmdir(tmpdir2)
+        # working with relative paths
+        work_dir = os.path.dirname(tmpdir2)
+        rel_base_name = os.path.join(os.path.basename(tmpdir2), 'archive')
+        base_name = os.path.join(work_dir, rel_base_name)
+
+        with support.change_cwd(work_dir):
+            res = make_archive(rel_base_name, 'zip', root_dir, 'dist')
 
         self.assertEqual(res, base_name + '.zip')
         self.assertTrue(os.path.isfile(res))
