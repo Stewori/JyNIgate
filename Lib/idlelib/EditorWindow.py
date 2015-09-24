@@ -17,6 +17,7 @@ from idlelib import PyParse
 from idlelib.configHandler import idleConf
 from idlelib import aboutDialog, textView, configDialog
 from idlelib import macosxSupport
+from idlelib import help
 
 # The default tab setting for a Text widget, in average-width characters.
 TK_TABWIDTH_DEFAULT = 8
@@ -82,6 +83,11 @@ class HelpDialog(object):
             near - a Toplevel widget (e.g. EditorWindow or PyShell)
                    to use as a reference for placing the help window
         """
+        import warnings as w
+        w.warn("EditorWindow.HelpDialog is no longer used by Idle.\n"
+               "It will be removed in 3.6 or later.\n"
+               "It has been replaced by private help.HelpWindow\n",
+               DeprecationWarning, stacklevel=2)
         if self.dlg is None:
             self.show_dialog(parent)
         if near:
@@ -108,9 +114,7 @@ class HelpDialog(object):
         self.dlg = None
         self.parent = None
 
-helpDialog = HelpDialog()  # singleton instance
-def _help_dialog(parent):  # wrapper for htest
-    helpDialog.show_dialog(parent)
+helpDialog = HelpDialog()  # singleton instance, no longer used
 
 
 class EditorWindow(object):
@@ -198,13 +202,13 @@ class EditorWindow(object):
         if macosxSupport.isAquaTk():
             # Command-W on editorwindows doesn't work without this.
             text.bind('<<close-window>>', self.close_event)
-            # Some OS X systems have only one mouse button,
-            # so use control-click for pulldown menus there.
-            #  (Note, AquaTk defines <2> as the right button if
-            #   present and the Tk Text widget already binds <2>.)
+            # Some OS X systems have only one mouse button, so use
+            # control-click for popup context menus there. For two
+            # buttons, AquaTk defines <2> as the right button, not <3>.
             text.bind("<Control-Button-1>",self.right_menu_event)
+            text.bind("<2>", self.right_menu_event)
         else:
-            # Elsewhere, use right-click for pulldown menus.
+            # Elsewhere, use right-click for popup menus.
             text.bind("<3>",self.right_menu_event)
         text.bind("<<cut>>", self.cut)
         text.bind("<<copy>>", self.copy)
@@ -558,19 +562,27 @@ class EditorWindow(object):
             return 'normal'
 
     def about_dialog(self, event=None):
+        "Handle Help 'About IDLE' event."
+        # Synchronize with macosxSupport.overrideRootMenu.about_dialog.
         aboutDialog.AboutDialog(self.top,'About IDLE')
 
     def config_dialog(self, event=None):
+        "Handle Options 'Configure IDLE' event."
+        # Synchronize with macosxSupport.overrideRootMenu.config_dialog.
         configDialog.ConfigDialog(self.top,'Settings')
+
     def config_extensions_dialog(self, event=None):
+        "Handle Options 'Configure Extensions' event."
         configDialog.ConfigExtensionsDialog(self.top)
 
     def help_dialog(self, event=None):
+        "Handle Help 'IDLE Help' event."
+        # Synchronize with macosxSupport.overrideRootMenu.help_dialog.
         if self.root:
             parent = self.root
         else:
             parent = self.top
-        helpDialog.display(parent, near=self.top)
+        help.show_idlehelp(parent)
 
     def python_docs(self, event=None):
         if sys.platform[:3] == 'win':
@@ -1717,4 +1729,4 @@ def _editor_window(parent):  # htest #
 
 if __name__ == '__main__':
     from idlelib.idle_test.htest import run
-    run(_help_dialog, _editor_window)
+    run(_editor_window)

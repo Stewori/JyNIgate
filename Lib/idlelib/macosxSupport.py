@@ -161,18 +161,23 @@ def overrideRootMenu(root, flist):
     WindowList.register_callback(postwindowsmenu)
 
     def about_dialog(event=None):
+        "Handle Help 'About IDLE' event."
+        # Synchronize with EditorWindow.EditorWindow.about_dialog.
         from idlelib import aboutDialog
         aboutDialog.AboutDialog(root, 'About IDLE')
 
     def config_dialog(event=None):
+        "Handle Options 'Configure IDLE' event."
+        # Synchronize with EditorWindow.EditorWindow.config_dialog.
         from idlelib import configDialog
         root.instance_dict = flist.inversedict
         configDialog.ConfigDialog(root, 'Settings')
 
     def help_dialog(event=None):
-        from idlelib import textView
-        fn = path.join(path.abspath(path.dirname(__file__)), 'help.txt')
-        textView.view_file(root, 'Help', fn)
+        "Handle Help 'IDLE Help' event."
+        # Synchronize with EditorWindow.EditorWindow.help_dialog.
+        from idlelib import help
+        help.show_idlehelp(root)
 
     root.bind('<<about-idle>>', about_dialog)
     root.bind('<<open-config-dialog>>', config_dialog)

@@ -8,7 +8,7 @@ IDLE
    single: Python Editor
    single: Integrated Development Environment
 
-.. moduleauthor:: Guido van Rossum <guido@Python.org>
+.. moduleauthor:: Guido van Rossum <guido@python.org>
 
 IDLE is the Python IDE built with the :mod:`tkinter` GUI toolkit.
 
@@ -18,13 +18,19 @@ IDLE has the following features:
 
 * cross-platform: works on Windows, Unix, and Mac OS X
 
+* Python shell window (interactive interpreter) with colorizing
+  of code input, output, and error messages
+
 * multi-window text editor with multiple undo, Python colorizing,
-  smart indent, call tips, and many other features
+  smart indent, call tips, auto completion, and other features
 
-* Python shell window (a.k.a. interactive interpreter)
+* search within any window, replace within editor windows, and search
+  through multiple files (grep)
 
-* debugger (not complete, but you can set breakpoints, view and step)
+* debugger with persistent breakpoints, stepping, and viewing
+  of global and local namespaces
 
+* configuration, browsers, and other dialogs
 
 Menus
 -----
@@ -200,7 +206,12 @@ Check Module
 
 Run Module
    Do Check Module (above).  If no error, restart the shell to clean the
-   environment, then execute the module.
+   environment, then execute the module.  Output is displayed in the Shell
+   window.  Note that output requires use of ``print`` or ``write``.
+   When execution is complete, the Shell retains focus and displays a prompt.
+   At this point, one may interactively explore the result of execution.
+   This is similar to executing a file with ``python -i file`` at a command
+   line.
 
 Shell menu (Shell window only)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -504,30 +515,42 @@ Command line usage
 
 ::
 
-   idle.py [-c command] [-d] [-e] [-s] [-t title] [arg] ...
+   idle.py [-c command] [-d] [-e] [-h] [-i] [-r file] [-s] [-t title] [-] [arg] ...
 
-   -c command  run this command
-   -d          enable debugger
-   -e          edit mode; arguments are files to be edited
-   -s          run $IDLESTARTUP or $PYTHONSTARTUP first
+   -c command  run command in the shell window
+   -d          enable debugger and open shell window
+   -e          open editor window
+   -h          print help message with legal combinatios and exit
+   -i          open shell window
+   -r file     run file in shell window
+   -s          run $IDLESTARTUP or $PYTHONSTARTUP first, in shell window
    -t title    set title of shell window
+   -           run stdin in shell (- must be last option before args)
 
 If there are arguments:
 
-#. If ``-e`` is used, arguments are files opened for editing and
-   ``sys.argv`` reflects the arguments passed to IDLE itself.
+* If ``-``, ``-c``, or ``r`` is used, all arguments are placed in
+  ``sys.argv[1:...]`` and ``sys.argv[0]`` is set to ``''``, ``'-c'``,
+  or ``'-r'``.  No editor window is opened, even if that is the default
+  set in the Options dialog.
 
-#. Otherwise, if ``-c`` is used, all arguments are placed in
-   ``sys.argv[1:...]``, with ``sys.argv[0]`` set to ``'-c'``.
+* Otherwise, arguments are files opened for editing and
+  ``sys.argv`` reflects the arguments passed to IDLE itself.
 
-#. Otherwise, if neither ``-e`` nor ``-c`` is used, the first
-   argument is a script which is executed with the remaining arguments in
-   ``sys.argv[1:...]``  and ``sys.argv[0]`` set to the script name.  If the
-   script name is '-', no script is executed but an interactive Python session
-   is started;    the arguments are still available in ``sys.argv``.
 
 Running without a subprocess
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, Idle executes user code in a separate subprocess via a socket,
+which uses the internal loopback interface.  This connection is not
+externally visible and no data is sent to or received from the Internet.
+If firewall software complains anyway, you can ignore it.
+
+If the attempt to make the socket connection fails, Idle will notify you.
+Such failures are sometimes transient, but if persistent, the problem
+may be either a firewall blocking the connecton or misconfiguration of
+a particular system.  Until the problem is fixed, one can run Idle with
+the -n command line switch.
 
 If IDLE is started with the -n command line switch it will run in a
 single process and will not create the subprocess which runs the RPC
