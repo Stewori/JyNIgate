@@ -10,6 +10,8 @@ What's New in Python 2.7.11?
 Core and Builtins
 -----------------
 
+- Issue #24848: Fixed a number of bugs in UTF-7 decoding of misformed data.
+
 - Issue #25003: os.urandom() doesn't use getentropy() on Solaris because
   getentropy() is blocking, whereas os.urandom() should not block. getentropy()
   is supported since Solaris 11.3.
@@ -40,6 +42,15 @@ Core and Builtins
 
 Library
 -------
+
+- Issue #25319: When threading.Event is reinitialized, the underlying condition
+  should use a regular lock rather than a recursive lock.
+
+- Issue #25232: Fix CGIRequestHandler to split the query from the URL at the
+  first question mark (?) rather than the last. Patch from Xiang Zhang.
+
+- Issue #24657: Prevent CGIRequestHandler from collapsing slashes in the
+  query part of the URL as if it were a path. Patch from Xiang Zhang.
 
 - Issue #22958: Constructor and update method of weakref.WeakValueDictionary
   now accept the self keyword argument.
@@ -168,6 +179,25 @@ Library
 
 IDLE
 ----
+
+- Issue #24820: IDLE now has an 'IDLE Dark' built-in text color theme.
+  It is more or less IDLE Classic inverted, with a cobalt blue background.
+  Strings, comments, keywords, ... are still green, red, orange, ... .
+  Selecting it displays the following warning and solution.
+  "IDLE Dark is new in October, 2015.  Trying to run earlier versions
+  of IDLE with it selected will disable colorizing, or worse.
+  If you might ever run an earlier release of IDLE, then before
+  exiting this version, either switch to another theme or hit the
+  'Save as New Custom Theme' button.  The latter requires a new name,
+  such as 'Custom Dark', but the custom theme will work with any IDLE
+  release, and can be modified."
+
+- Issue #25224: README.txt is now an idlelib index for IDLE developers and
+  curious users.  The previous user content is now in the IDLE doc and is
+  redundant.  IDLE now means 'Integrated Development and Learning Environment'.
+
+- Issue #24820: Users can now set breakpoint colors in
+  Settings -> Custom Highlighting.  Original patch by Mark Roseman.
 
 - Issue #24972: Inactive selection background now matches active selection
   background, as configured by user, on all systems.  Found items are now
