@@ -46,6 +46,8 @@ Core and Builtins
 Library
 -------
 
+- Issue #25515: Always use os.urandom as a source of randomness in uuid.uuid4.
+
 - Issue #21827: Fixed textwrap.dedent() for the case when largest common
   whitespace is a substring of smallest leading whitespace.
   Based on patch by Robert Li.
@@ -934,7 +936,7 @@ IDLE
   Changes are written to HOME/.idlerc/config-extensions.cfg.
   Original patch by Tal Einat.
 
-- Issue #16233: A module browser (File : Class Browser, Alt+C) requires a
+- Issue #16233: A module browser (File : Class Browser, Alt+C) requires an
   editor window with a filename.  When Class Browser is requested otherwise,
   from a shell, output window, or 'Untitled' editor, Idle no longer displays
   an error box.  It now pops up an Open Module box (Alt+M). If a valid name
